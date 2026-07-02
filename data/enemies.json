@@ -1,0 +1,40 @@
+{
+  "grunt": {
+    "id": "grunt",
+    "name": "Ashen Grunt",
+    "hpMax": 40,
+    "aggroRange": 200,
+    "color": "0x669944",
+    "attacks": {
+      "jab": {
+        "telegraphMs": 400,
+        "activeMs": 120,
+        "recoverMs": 400,
+        "cooldownMs": 900,
+        "damage": 8,
+        "range": 50,
+        "animationKey": "jab"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["jab"] }]
+  },
+  "brute": {
+    "id": "brute",
+    "name": "Ashen Brute",
+    "hpMax": 70,
+    "aggroRange": 180,
+    "color": "0x996633",
+    "attacks": {
+      "swing": {
+        "telegraphMs": 550,
+        "activeMs": 160,
+        "recoverMs": 500,
+        "cooldownMs": 1100,
+        "damage": 14,
+        "range": 65,
+        "animationKey": "swing"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["swing"] }]
+  }
+}

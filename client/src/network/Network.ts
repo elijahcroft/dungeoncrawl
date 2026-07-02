@@ -1,25 +1,32 @@
 import { Client, Room } from "colyseus.js";
-import { BossRoomState, PlayerState } from "./schema";
+import { DungeonRoomState, PlayerState, EnemyState, ItemPickupState } from "./schema";
 
-export type { PlayerState as RemotePlayerState, BossRoomState };
+export type { PlayerState as RemotePlayerState, EnemyState, ItemPickupState, DungeonRoomState };
 
 const SERVER_URL = `ws://${window.location.hostname}:2567`;
 const RECONNECT_TOKEN_KEY = "boss_room_reconnect_token";
 
+export interface JoinOptions {
+  dungeonId?: string;
+  name?: string;
+  color?: string;
+  className?: string;
+}
+
 export class Network {
   private client = new Client(SERVER_URL);
-  room: Room<BossRoomState> | null = null;
+  room: Room<DungeonRoomState> | null = null;
 
   get sessionId(): string | null {
     return this.room?.sessionId ?? null;
   }
 
-  async connect(): Promise<Room<BossRoomState> | null> {
+  async connect(options: JoinOptions): Promise<Room<DungeonRoomState> | null> {
     const storedToken = sessionStorage.getItem(RECONNECT_TOKEN_KEY);
     try {
       const room = storedToken
-        ? await this.client.reconnect<BossRoomState>(storedToken, BossRoomState)
-        : await this.client.joinOrCreate<BossRoomState>("boss_room", {}, BossRoomState);
+        ? await this.client.reconnect<DungeonRoomState>(storedToken, DungeonRoomState)
+        : await this.client.joinOrCreate<DungeonRoomState>("dungeon_room", options, DungeonRoomState);
 
       this.room = room;
       sessionStorage.setItem(RECONNECT_TOKEN_KEY, room.reconnectionToken);
@@ -44,7 +51,7 @@ export class Network {
     this.room?.send("move", { x, y, facingX, facingY, rolling });
   }
 
-  sendBossHit(damage: number) {
-    this.room?.send("boss_hit", damage);
+  sendEnemyHit(enemyId: string, damage: number) {
+    this.room?.send("enemy_hit", { enemyId, damage });
   }
 }

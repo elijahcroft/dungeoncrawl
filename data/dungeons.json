@@ -1,0 +1,79 @@
+{
+  "ashen-halls": {
+    "id": "ashen-halls",
+    "name": "The Ashen Halls",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "Guard Post",
+        "spawns": ["grunt", "grunt"],
+        "entrance": { "x": 80, "y": 320 },
+        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "walls": [{ "x": 460, "y": 260, "w": 40, "h": 120 }]
+      },
+      {
+        "id": "r2",
+        "type": "rest",
+        "name": "Respite",
+        "entrance": { "x": 80, "y": 320 },
+        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "walls": []
+      },
+      {
+        "id": "r3",
+        "type": "boss",
+        "name": "Sentinel's Chamber",
+        "boss": "sentinel",
+        "bossSpawn": { "x": 640, "y": 320 },
+        "entrance": { "x": 80, "y": 320 },
+        "exit": null,
+        "walls": []
+      }
+    ]
+  },
+  "sable-crypt": {
+    "id": "sable-crypt",
+    "name": "The Sable Crypt",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "boss",
+        "name": "Warden's Gate",
+        "boss": "warden",
+        "bossSpawn": { "x": 640, "y": 320 },
+        "entrance": { "x": 80, "y": 320 },
+        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "walls": []
+      },
+      {
+        "id": "r2",
+        "type": "treasure",
+        "name": "Sunken Vault",
+        "item": "iron_ring",
+        "entrance": { "x": 80, "y": 320 },
+        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "walls": [{ "x": 440, "y": 220, "w": 80, "h": 30 }, { "x": 440, "y": 390, "w": 80, "h": 30 }]
+      },
+      {
+        "id": "r3",
+        "type": "arena",
+        "name": "Bone Hollow",
+        "spawns": ["grunt", "grunt", "brute"],
+        "entrance": { "x": 80, "y": 320 },
+        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "walls": [{ "x": 300, "y": 100, "w": 30, "h": 150 }, { "x": 630, "y": 390, "w": 30, "h": 150 }]
+      },
+      {
+        "id": "r4",
+        "type": "boss",
+        "name": "Sentinel's Return",
+        "boss": "sentinel",
+        "bossSpawn": { "x": 640, "y": 320 },
+        "entrance": { "x": 80, "y": 320 },
+        "exit": null,
+        "walls": []
+      }
+    ]
+  }
+}

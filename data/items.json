@@ -1,0 +1,23 @@
+{
+  "iron_ring": {
+    "id": "iron_ring",
+    "name": "Iron Ring",
+    "color": "0xaaaaaa",
+    "stat": "hpMax",
+    "amount": 25
+  },
+  "swift_boots": {
+    "id": "swift_boots",
+    "name": "Swift Boots",
+    "color": "0x44ccff",
+    "stat": "speedPct",
+    "amount": 15
+  },
+  "heavy_blade": {
+    "id": "heavy_blade",
+    "name": "Heavy Blade",
+    "color": "0xff8844",
+    "stat": "damage",
+    "amount": 6
+  }
+}

@@ -5,11 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Co-op Boss Game</title>
     <style>
-      html, body { margin: 0; padding: 0; background: #111; overflow: hidden; }
+      html, body { margin: 0; padding: 0; background: #111; overflow: hidden; font-family: sans-serif; }
       #app { display: flex; align-items: center; justify-content: center; height: 100vh; }
+
+      #join-overlay {
+        position: fixed;
+        inset: 0;
+        background: #14141a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      #join-form {
+        background: #1e1e28;
+        border: 1px solid #33333f;
+        border-radius: 10px;
+        padding: 28px 32px;
+        width: 320px;
+        color: #eee;
+      }
+      #join-form h1 { font-size: 18px; margin: 0 0 4px; }
+      #join-form p { font-size: 12px; color: #888; margin: 0 0 18px; }
+      #join-form label { display: block; font-size: 12px; color: #aaa; margin: 14px 0 4px; }
+      #join-form input[type="text"], #join-form select {
+        width: 100%;
+        box-sizing: border-box;
+        background: #111117;
+        border: 1px solid #33333f;
+        color: #eee;
+        border-radius: 6px;
+        padding: 8px;
+        font-size: 13px;
+      }
+      #color-swatches { display: flex; gap: 8px; margin-top: 4px; }
+      .swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .swatch.selected { border-color: #fff; }
+      #join-form button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 10px;
+        background: #4da6ff;
+        border: none;
+        border-radius: 6px;
+        color: #111;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      #join-form button:hover { background: #6fb8ff; }
     </style>
   </head>
   <body>
+    <div id="join-overlay">
+      <form id="join-form">
+        <h1>Enter the Dungeon</h1>
+        <p>Co-op boss game — WASD move, SPACE dodge, J attack.</p>
+
+        <label for="join-name">Name</label>
+        <input id="join-name" type="text" maxlength="16" placeholder="Player" />
+
+        <label>Color</label>
+        <div id="color-swatches">
+          <div class="swatch selected" data-color="0x4da6ff" style="background:#4da6ff"></div>
+          <div class="swatch" data-color="0xff6b6b" style="background:#ff6b6b"></div>
+          <div class="swatch" data-color="0x6bff8f" style="background:#6bff8f"></div>
+          <div class="swatch" data-color="0xffd166" style="background:#ffd166"></div>
+          <div class="swatch" data-color="0xc06bff" style="background:#c06bff"></div>
+        </div>
+
+        <label for="join-class">Class</label>
+        <select id="join-class">
+          <option value="warrior">Warrior — balanced</option>
+          <option value="guardian">Guardian — more HP, slower</option>
+        </select>
+
+        <label for="join-dungeon">Dungeon</label>
+        <select id="join-dungeon">
+          <option value="ashen-halls">The Ashen Halls</option>
+          <option value="sable-crypt">The Sable Crypt</option>
+        </select>
+
+        <button type="submit">Enter</button>
+      </form>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

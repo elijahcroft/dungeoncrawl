@@ -20,6 +20,38 @@
       { "hpThreshold": 100, "attacks": ["basic_slam"] }
     ]
   },
+  "warden": {
+    "id": "warden",
+    "name": "Hollow Warden",
+    "hpMax": 140,
+    "aggroRange": 220,
+    "color": "0x448866",
+    "attacks": {
+      "smash": {
+        "telegraphMs": 600,
+        "activeMs": 180,
+        "recoverMs": 550,
+        "cooldownMs": 1300,
+        "damage": 14,
+        "range": 90,
+        "animationKey": "slam"
+      },
+      "lunge": {
+        "telegraphMs": 450,
+        "activeMs": 300,
+        "recoverMs": 650,
+        "cooldownMs": 1500,
+        "damage": 16,
+        "range": 60,
+        "dashSpeed": 460,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["smash", "lunge"], "color": "0x448866" },
+      { "hpThreshold": 50, "attacks": ["smash", "lunge"], "color": "0x88aa44" }
+    ]
+  },
   "sentinel": {
     "id": "sentinel",
     "name": "Ashen Sentinel",

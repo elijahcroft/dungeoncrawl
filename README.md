@@ -50,16 +50,28 @@ Colyseus server is up — the client falls back to single-player if it can't con
 
 ## Current status
 
-- **Phase 1 (done):** Single-player core combat feel — movement, dodge roll with i-frames,
-  stamina bar, placeholder "dummy" boss with a telegraphed melee attack.
-- **Phase 2 (done):** Colyseus networking — 2-player room, synced positions/state, a
-  shared/authoritative boss HP bar, and basic reconnect handling (page refresh within ~20s
-  rejoins your same player instead of spawning a duplicate).
-- **Phase 3:** Data-driven Boss/Item/Dungeon JSON loader system.
-- **Phase 4:** First real boss with multiple attacks + a phase transition, plus "juice"
-  (hit-stop, screen shake, particles).
+- **Phases 1–8 (done):** Core combat feel, Colyseus networking, data-driven Boss/Item/Dungeon
+  JSON systems, a fully juiced first boss (Ashen Sentinel), server-authoritative co-op combat
+  (one shared boss/enemy state everyone sees identically), and playtest-readiness (respawn,
+  room reset, reconnect grace).
+- **Phase 9 (done):** Multi-room dungeon system — a run is a sequence of rooms (`arena` /
+  `rest` / `boss` / `treasure`), each with its own layout (`walls`), an entrance, and an exit
+  doorway players walk into together once the room is cleared. Room progression, enemy
+  spawning, and item pickups are all server-authoritative and fully data-driven from
+  `data/dungeons.json`.
+- **Phase 10 (done):** Content authoring pass — a second boss (Hollow Warden), `items.json`
+  with an auto-pickup equip loop, a second longer dungeon (The Sable Crypt), and
+  `data/SCHEMA.md` documenting every JSON schema so new content needs zero code changes.
+- **Phase 11 (partial, by design — it's a menu, not a checklist):** Player classes
+  (Warrior/Guardian, chosen on the join screen), character customization (name + color),
+  and boss/enemy HP scaling by player count. The rest of the Phase 11 backlog (revive
+  mechanic, spectator mode, persistent progression, etc.) is optional future work.
+- **Player sprites (done):** Procedurally-drawn 2-frame character sprites (head/body/legs,
+  facing flip, walk animation) replace the original flat-color rectangles for players and
+  enemies — see `client/src/gfx/sprites.ts`.
 
-See `soulslike-boss-game-plan.md` for the full plan.
+See `soulslike-boss-game-plan.md` and `NEXT-STEPS.md` for the full plan and history, and
+`data/SCHEMA.md` for how to add bosses/enemies/dungeons/items.
 
 ## Controls
 
@@ -67,23 +79,24 @@ See `soulslike-boss-game-plan.md` for the full plan.
 - `SPACE` — dodge roll (grants brief invulnerability, costs stamina)
 - `J` — melee attack (costs stamina)
 
-Fight the red dummy boss in the arena. It telegraphs (turns yellow) before it attacks
-(turns red) — dodge through the attack or step out of range. Getting hit briefly turns you
-red and gives you a moment of invulnerability so you can't be juggled by back-to-back hits.
+On load you'll pick a name, color, class, and dungeon before entering. Clear each room to
+open its exit (it glows green) and walk through together to advance; wipe the party and the
+run resets to the dungeon's first room. Enemies telegraph (turn yellow) before they attack
+(turn red) — dodge through the attack or step out of range.
 
-## How the networking works (Phase 2)
+## How the networking works
 
 - Movement is **client-authoritative**: each player simulates their own physics locally
   (for responsiveness) and broadcasts position/facing/rolling state to the server ~20x/sec.
-  Other clients render that as a lerped "remote player" rectangle (green).
-- The **dummy boss's HP is server-authoritative**: landing a hit sends a `boss_hit` message
-  to the server, which is the single source of truth for HP. Each client still runs its own
-  local copy of the boss's telegraph/attack timing for visuals — a deliberate simplification
-  for the MVP, not true server-side boss AI (that's a natural upgrade once the data-driven
-  Boss system lands in Phase 3/4, since the server could then run the same JSON-driven state
-  machine authoritatively).
-- If the server isn't running, the client silently falls back to the Phase 1 single-player
-  mode (check the small status text at the top of the game canvas).
+  Other clients render that as a lerped, name-tagged "remote player" sprite.
+- **Everything else is server-authoritative**: the Colyseus room (`DungeonRoom`) runs the
+  same JSON-driven boss/enemy state machine (`shared/boss.ts`) for every enemy in the current
+  room, decides when attacks land, tracks room/run progression, and resolves item pickups.
+  Landing a melee hit sends an `enemy_hit` message naming the target; the server is the single
+  source of truth for HP. This is what makes co-op consistent — every player sees the same
+  telegraph, at the same time, targeting the same player.
+- If the server isn't running, the client silently falls back to a single-player offline
+  fallback fight (check the small status text at the top of the game canvas).
 
 ### A note on dependency versions
 
