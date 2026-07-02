@@ -44,10 +44,6 @@ export class Network {
     this.room?.send("move", { x, y, facingX, facingY, rolling });
   }
 
-  sendPlayerHp(hp: number) {
-    this.room?.send("player_hp", hp);
-  }
-
   sendBossHit(damage: number) {
     this.room?.send("boss_hit", damage);
   }

@@ -13,10 +13,10 @@ export class RemotePlayer {
     this.sprite = scene.add.rectangle(x, y, 28, 28, 0x4dff88);
   }
 
-  setTarget(x: number, y: number, rolling: boolean) {
+  setTarget(x: number, y: number, rolling: boolean, hp: number) {
     this.targetX = x;
     this.targetY = y;
-    this.sprite.setFillStyle(rolling ? 0xffffff : 0x4dff88);
+    this.sprite.setFillStyle(hp <= 0 ? 0x555555 : rolling ? 0xffffff : 0x4dff88);
   }
 
   update() {

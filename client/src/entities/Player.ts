@@ -50,6 +50,7 @@ export class Player {
   };
 
   onAttack?: (originX: number, originY: number, dirX: number, dirY: number) => void;
+  onRoll?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -99,6 +100,30 @@ export class Player {
     });
   }
 
+  /** Reconcile local HP with the server's authoritative value (multiplayer mode). */
+  syncHp(hp: number) {
+    const nextHp = Math.max(0, hp);
+    const wasAlive = this.hp > 0;
+    const tookDamage = nextHp < this.hp;
+    this.hp = nextHp;
+
+    if (nextHp <= 0) {
+      this.sprite.setFillStyle(0x555555);
+      return;
+    }
+    if (!wasAlive) {
+      // Respawned server-side.
+      this.sprite.setFillStyle(0x4da6ff);
+      return;
+    }
+    if (tookDamage) {
+      this.sprite.setFillStyle(0xff4d4d);
+      this.scene.time.delayedCall(120, () => {
+        if (this.isAlive) this.sprite.setFillStyle(0x4da6ff);
+      });
+    }
+  }
+
   update(_time: number, _delta: number) {
     const now = this.scene.time.now;
     const body = this.sprite.body;
@@ -137,6 +162,7 @@ export class Player {
       this.stamina >= ROLL_STAMINA_COST
     ) {
       this.spendStamina(ROLL_STAMINA_COST);
+      this.onRoll?.();
       this.isRolling = true;
       this.rollEndsAt = now + ROLL_DURATION_MS;
       this.rollCooldownUntil = now + ROLL_DURATION_MS + ROLL_COOLDOWN_MS;

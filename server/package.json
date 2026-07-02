@@ -2,12 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Colyseus multiplayer server for co-op boss game",
-  "main": "build/index.js",
+  "main": "build/server/src/index.js",
   "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node build/index.js"
+    "start": "node build/server/src/index.js"
   },
   "license": "ISC",
   "dependencies": {

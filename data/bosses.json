@@ -1,0 +1,74 @@
+{
+  "dummy": {
+    "id": "dummy",
+    "name": "Dummy Boss",
+    "hpMax": 150,
+    "aggroRange": 220,
+    "color": "0xaa3333",
+    "attacks": {
+      "basic_slam": {
+        "telegraphMs": 700,
+        "activeMs": 200,
+        "recoverMs": 600,
+        "cooldownMs": 1400,
+        "damage": 15,
+        "range": 100,
+        "animationKey": "slam"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["basic_slam"] }
+    ]
+  },
+  "sentinel": {
+    "id": "sentinel",
+    "name": "Ashen Sentinel",
+    "hpMax": 220,
+    "aggroRange": 260,
+    "color": "0x8855cc",
+    "attacks": {
+      "slam": {
+        "telegraphMs": 650,
+        "activeMs": 180,
+        "recoverMs": 550,
+        "cooldownMs": 1200,
+        "damage": 16,
+        "range": 100,
+        "animationKey": "slam"
+      },
+      "dash": {
+        "telegraphMs": 500,
+        "activeMs": 350,
+        "recoverMs": 700,
+        "cooldownMs": 1600,
+        "damage": 18,
+        "range": 70,
+        "dashSpeed": 520,
+        "animationKey": "dash"
+      },
+      "slam_enraged": {
+        "telegraphMs": 450,
+        "activeMs": 160,
+        "recoverMs": 400,
+        "cooldownMs": 850,
+        "damage": 18,
+        "range": 105,
+        "animationKey": "slam"
+      },
+      "dash_enraged": {
+        "telegraphMs": 350,
+        "activeMs": 320,
+        "recoverMs": 500,
+        "cooldownMs": 1100,
+        "damage": 20,
+        "range": 75,
+        "dashSpeed": 680,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["slam", "dash"], "color": "0x8855cc" },
+      { "hpThreshold": 50, "attacks": ["slam_enraged", "dash_enraged"], "color": "0xcc3355" }
+    ]
+  }
+}

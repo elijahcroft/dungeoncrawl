@@ -17,4 +17,11 @@ export class BossRoomState extends Schema {
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type("number") bossHp = 0;
   @type("number") bossHpMax = 0;
+  @type("number") bossX = 0;
+  @type("number") bossY = 0;
+  @type("string") bossState = "idle";
+  @type("number") bossPhase = 0;
+  @type("string") currentAttackId = "";
+  @type("string") roomPhase = "fighting";
+  @type("number") resetAt = 0;
 }

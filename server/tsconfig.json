@@ -5,7 +5,7 @@
     "moduleResolution": "node10",
     "ignoreDeprecations": "6.0",
     "outDir": "build",
-    "rootDir": "src",
+    "rootDir": "..",
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -13,5 +13,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src", "../shared"]
 }
