@@ -80,6 +80,10 @@ export class Player {
     return this.hp > 0;
   }
 
+  get rolling() {
+    return this.isRolling;
+  }
+
   private spendStamina(amount: number) {
     this.stamina = Math.max(0, this.stamina - amount);
     this.lastStaminaUseAt = this.scene.time.now;

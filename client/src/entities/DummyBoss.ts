@@ -51,6 +51,16 @@ export class DummyBoss {
     }
   }
 
+  /** Reconcile local HP with the server's authoritative value (multiplayer mode). */
+  syncHp(hp: number) {
+    if (!this.isAlive) return;
+    this.hp = Math.max(0, hp);
+    if (this.hp <= 0) {
+      this.state = "dead";
+      this.sprite.setFillStyle(0x333333);
+    }
+  }
+
   private colorForState() {
     switch (this.state) {
       case "telegraph":
