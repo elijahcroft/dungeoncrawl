@@ -5,6 +5,7 @@ import { RemotePlayer } from "../entities/RemotePlayer";
 import { BossBar } from "../ui/BossBar";
 import { Hud } from "../ui/Hud";
 import { showDamageText } from "../ui/DamageText";
+import { PauseMenu } from "../ui/PauseMenu";
 import { sfx } from "../audio/sfx";
 import { Network, type RemotePlayerState, type EnemyState, type ItemPickupState, type DungeonRoomState } from "../network/Network";
 import { joinOptions } from "../joinOptions";
@@ -85,6 +86,7 @@ const MELEE_PLAYER_HURT_RADIUS = 16;
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private hud!: Hud;
+  private pauseMenu!: PauseMenu;
   private hint!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private roomText!: Phaser.GameObjects.Text;
@@ -252,6 +254,11 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(200)
       .setAlpha(0);
+
+    // Controls overlay: ESC toggles it. Client-side only — it never pauses the
+    // networked sim, so co-op partners and the server keep running underneath.
+    this.pauseMenu = new PauseMenu(this);
+    this.input.keyboard?.on("keydown-ESC", () => this.pauseMenu.toggle());
 
     // Web Audio starts suspended; resume it on the first key/pointer input.
     this.input.keyboard?.once("keydown", () => sfx.resume());
