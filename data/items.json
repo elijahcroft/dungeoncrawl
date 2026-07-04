@@ -19,5 +19,15 @@
     "color": "0xff8844",
     "stat": "damage",
     "amount": 6
-  }
+  },
+  "w_dagger": { "id": "w_dagger", "name": "Rusty Dagger", "color": "0xbfc6d0", "weaponId": "dagger" },
+  "w_sword": { "id": "w_sword", "name": "Iron Sword", "color": "0xcfd6e0", "weaponId": "sword" },
+  "w_spear": { "id": "w_spear", "name": "Long Spear", "color": "0xd9dee6", "weaponId": "spear" },
+  "w_axe": { "id": "w_axe", "name": "Battle Axe", "color": "0xc7cdd6", "weaponId": "axe" },
+  "w_mace": { "id": "w_mace", "name": "Spiked Mace", "color": "0x9aa2ae", "weaponId": "mace" },
+  "w_rapier": { "id": "w_rapier", "name": "Duelist Rapier", "color": "0xe2e6ee", "weaponId": "rapier" },
+  "w_greatsword": { "id": "w_greatsword", "name": "Greatsword", "color": "0xd0d6e2", "weaponId": "greatsword" },
+  "w_warhammer": { "id": "w_warhammer", "name": "War Hammer", "color": "0x8f97a4", "weaponId": "warhammer" },
+  "w_katana": { "id": "w_katana", "name": "Katana", "color": "0xdfe4ec", "weaponId": "katana" },
+  "w_crossbow": { "id": "w_crossbow", "name": "Clockwork Crossbow", "color": "0xd8b15f", "weaponId": "crossbow" }
 }

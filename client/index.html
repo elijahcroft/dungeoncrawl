@@ -6,7 +6,10 @@
     <title>Co-op Boss Game</title>
     <style>
       html, body { margin: 0; padding: 0; background: #111; overflow: hidden; font-family: sans-serif; }
-      #app { display: flex; align-items: center; justify-content: center; height: 100vh; }
+      html.admin-mode, body.admin-mode { overflow: auto; }
+      [hidden] { display: none !important; }
+      #app { display: flex; align-items: center; justify-content: center; height: 100vh; box-sizing: border-box; padding: 24px; }
+      #app.admin-game { padding-top: 56px; }
 
       #join-overlay {
         position: fixed;
@@ -59,13 +62,229 @@
         cursor: pointer;
       }
       #join-form button:hover { background: #6fb8ff; }
+
+      #admin-overlay {
+        background: #101217;
+        color: #eceff4;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      #admin-game-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: rgba(16, 18, 23, 0.92);
+        border-bottom: 1px solid #2a2f3a;
+        color: #eceff4;
+        font-size: 13px;
+      }
+      #admin-game-mode { font-weight: bold; color: #9fd0ff; }
+      #admin-game-bar button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        background: #4da6ff;
+        color: #06121f;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      #admin-game-bar button.secondary { background: #323946; color: #e6edf7; }
+      #admin-game-bar button:hover { filter: brightness(1.08); }
+      #admin-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      #admin-shell h1 { margin: 0 0 6px; font-size: 22px; }
+      #admin-shell h2 { margin: 0 0 12px; font-size: 15px; color: #d8dee9; }
+      #admin-shell p { margin: 0 0 16px; color: #9aa4b2; font-size: 13px; }
+      #admin-login-form, .admin-panel-block {
+        background: #1a1d25;
+        border: 1px solid #303642;
+        border-radius: 8px;
+        padding: 18px;
+      }
+      #admin-login-form {
+        max-width: 360px;
+      }
+      #admin-panel { display: grid; gap: 16px; }
+      #admin-session-grid {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+      #admin-login-form label, #admin-panel label {
+        display: block;
+        color: #aeb7c4;
+        font-size: 12px;
+        margin: 10px 0 5px;
+      }
+      #admin-login-form input, #admin-panel input, #admin-panel select, #admin-panel textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: #0f1117;
+        border: 1px solid #343b49;
+        border-radius: 6px;
+        color: #eef2f7;
+        padding: 9px;
+        font-size: 13px;
+      }
+      #admin-panel textarea {
+        min-height: 260px;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        line-height: 1.4;
+      }
+      .admin-compact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .admin-row { display: flex; gap: 8px; flex-wrap: wrap; }
+      #admin-shell button {
+        background: #5aa0ff;
+        border: 0;
+        border-radius: 6px;
+        color: #08111f;
+        cursor: pointer;
+        font-weight: 700;
+        padding: 9px 11px;
+      }
+      #admin-shell button.secondary { background: #323946; color: #e6edf7; }
+      #admin-shell button.warn { background: #ffb454; color: #1f1300; }
+      #admin-shell button:hover { filter: brightness(1.08); }
+      #admin-state, #admin-status, #admin-save-status, #builder-dungeon-state {
+        color: #aeb7c4;
+        font-size: 12px;
+        min-height: 16px;
+      }
+      #admin-player-list {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        max-height: 240px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .admin-player {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        border-top: 1px solid #2b303b;
+        padding-top: 8px;
+      }
+      .admin-player small { color: #8792a2; }
+      #builder-layout {
+        display: grid;
+        grid-template-columns: 230px minmax(420px, 1fr) 260px;
+        gap: 14px;
+        align-items: start;
+      }
+      #admin-room-list, #template-list {
+        display: grid;
+        gap: 6px;
+        max-height: 240px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .room-list-button, .template-list-button {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        background: #111620;
+        border: 1px solid #303846;
+        border-radius: 6px;
+        color: #e8edf6;
+        cursor: pointer;
+        padding: 8px;
+        text-align: left;
+      }
+      .room-list-button.active, .template-list-button.active { border-color: #5aa0ff; background: #172235; }
+      .room-list-button small, .template-list-button small { color: #8f9bad; }
+      #builder-toolbar {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .tool-button {
+        background: #151b26;
+        border: 1px solid #343d4c;
+        border-radius: 6px;
+        color: #dbe5f2;
+        cursor: grab;
+        padding: 8px;
+        text-align: center;
+        user-select: none;
+      }
+      .tool-button.active { border-color: #5aa0ff; background: #173050; }
+      #room-stage-frame {
+        background: #0b0e14;
+        border: 1px solid #343d4c;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      #room-stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        overflow: hidden;
+        border-radius: 4px;
+        background-color: #151922;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 5% 7.5%;
+        cursor: crosshair;
+      }
+      .stage-object {
+        position: absolute;
+        box-sizing: border-box;
+        border: 2px solid rgba(255,255,255,0.75);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        text-shadow: 0 1px 2px #000;
+        user-select: none;
+      }
+      .stage-object.selected { outline: 3px solid #5aa0ff; outline-offset: 2px; }
+      .stage-wall { background: #3a3f4d; border-color: #808998; }
+      .stage-exit { background: rgba(85,255,136,0.34); border-color: #55ff88; }
+      .stage-entrance { width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: #4da6ff; border-color: #b8dcff; }
+      .stage-boss { width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; background: #b75cff; border-color: #edc8ff; }
+      .stage-item { width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 6px; background: #ffd166; border-color: #fff0aa; }
+      .stage-enemy { width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: #a0d468; border-color: #dcffb8; }
+      #inspector-selection {
+        background: #10151e;
+        border: 1px solid #303846;
+        border-radius: 6px;
+        padding: 10px;
+        min-height: 52px;
+        color: #aeb7c4;
+        font-size: 12px;
+      }
+      #json-details summary { cursor: pointer; color: #d8dee9; font-weight: 700; margin-bottom: 8px; }
+      @media (max-width: 840px) {
+        #admin-session-grid, #builder-layout { grid-template-columns: 1fr; }
+        #builder-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #admin-overlay { padding: 14px; }
+      }
     </style>
   </head>
   <body>
     <div id="join-overlay">
       <form id="join-form">
-        <h1>Enter the Dungeon</h1>
-        <p>Co-op boss game — WASD move, SPACE dodge, J attack.</p>
+        <h1>Enter the Lobby</h1>
+        <p>Co-op boss game — wait for the admin to launch a dungeon.</p>
 
         <label for="join-name">Name</label>
         <input id="join-name" type="text" maxlength="16" placeholder="Player" />
@@ -85,14 +304,188 @@
           <option value="guardian">Guardian — more HP, slower</option>
         </select>
 
-        <label for="join-dungeon">Dungeon</label>
-        <select id="join-dungeon">
-          <option value="ashen-halls">The Ashen Halls</option>
-          <option value="sable-crypt">The Sable Crypt</option>
-        </select>
-
         <button type="submit">Enter</button>
       </form>
+    </div>
+    <div id="admin-overlay" hidden>
+      <div id="admin-shell">
+        <h1>Dungeon Admin</h1>
+        <p>Launch, edit, and reset the shared class session.</p>
+
+        <form id="admin-login-form">
+          <label for="admin-pin">Admin PIN</label>
+          <input id="admin-pin" type="password" autocomplete="current-password" placeholder="teacher" />
+          <button type="submit">Connect</button>
+          <div id="admin-status"></div>
+        </form>
+
+        <div id="admin-panel" hidden>
+          <div id="admin-session-grid">
+            <div class="admin-panel-block">
+              <h2>Session</h2>
+              <div id="admin-state"></div>
+
+              <label for="admin-launch-dungeon-select">Launch Dungeon</label>
+              <select id="admin-launch-dungeon-select"></select>
+              <div id="admin-launch-selection">Select a dungeon to launch for the whole lobby.</div>
+
+              <div class="admin-row" style="margin-top: 10px">
+                <button id="admin-launch" type="button">Launch</button>
+                <button class="secondary" data-admin-command="admin_return_lobby" type="button">Lobby</button>
+                <button class="warn" data-admin-command="admin_restart" type="button">Restart</button>
+              </div>
+
+              <h2 style="margin-top: 18px">Controls</h2>
+              <div class="admin-row">
+                <button class="secondary" data-admin-command="admin_next_room" type="button">Next Room</button>
+                <button class="secondary" data-admin-command="admin_open_exit" type="button">Open Exit</button>
+                <button class="secondary" data-admin-command="admin_heal_all" type="button">Heal All</button>
+                <button class="secondary" data-admin-command="admin_clear_enemies" type="button">Clear Enemies</button>
+                <button class="secondary" data-admin-command="admin_gather" type="button">Gather</button>
+              </div>
+
+              <label for="admin-notice-input">Notice</label>
+              <div class="admin-row">
+                <input id="admin-notice-input" type="text" maxlength="80" placeholder="Message to show everyone" />
+                <button id="admin-send-notice" class="secondary" type="button">Send</button>
+              </div>
+
+              <h2 style="margin-top: 18px">Room View</h2>
+              <div class="admin-row">
+                <button id="admin-spectate" class="secondary" type="button">Spectate</button>
+                <button id="admin-play" type="button">Join as Player</button>
+              </div>
+            </div>
+
+            <div class="admin-panel-block">
+              <h2>Players</h2>
+              <div id="admin-player-list"></div>
+            </div>
+          </div>
+
+            <div class="admin-panel-block">
+              <h2>Dungeon Builder</h2>
+              <label for="builder-dungeon-select">Edit Saved Dungeon</label>
+              <select id="builder-dungeon-select"></select>
+              <div class="admin-row" style="margin-top: 10px">
+                <button id="builder-new-dungeon" class="secondary" type="button">New Dungeon</button>
+              </div>
+              <div id="builder-dungeon-state" style="margin-top: 10px"></div>
+
+              <div class="admin-compact-grid">
+                <div>
+                  <label for="builder-dungeon-id">Dungeon ID</label>
+                <input id="builder-dungeon-id" type="text" />
+              </div>
+              <div>
+                <label for="builder-dungeon-name">Dungeon Name</label>
+                <input id="builder-dungeon-name" type="text" />
+              </div>
+            </div>
+
+            <div id="builder-layout" style="margin-top: 14px">
+              <div>
+                <h2>Rooms</h2>
+                <div id="admin-room-list"></div>
+                <div class="admin-row" style="margin-top: 10px">
+                  <button id="room-add" class="secondary" type="button">Add</button>
+                  <button id="room-duplicate" class="secondary" type="button">Duplicate</button>
+                  <button id="room-delete" class="secondary" type="button">Delete</button>
+                </div>
+                <div class="admin-row" style="margin-top: 8px">
+                  <button id="room-up" class="secondary" type="button">Up</button>
+                  <button id="room-down" class="secondary" type="button">Down</button>
+                </div>
+
+                <h2 style="margin-top: 18px">Room Library</h2>
+                <div id="template-list"></div>
+                <div class="admin-row" style="margin-top: 10px">
+                  <button id="template-insert" class="secondary" type="button">Insert</button>
+                  <button id="template-save" class="secondary" type="button">Save Room</button>
+                </div>
+              </div>
+
+              <div>
+                <div id="builder-toolbar">
+                  <div class="tool-button active" draggable="true" data-tool="select">Select</div>
+                  <div class="tool-button" draggable="true" data-tool="wall">Wall</div>
+                  <div class="tool-button" draggable="true" data-tool="entrance">Entrance</div>
+                  <div class="tool-button" draggable="true" data-tool="exit">Exit</div>
+                  <div class="tool-button" draggable="true" data-tool="enemy">Enemy</div>
+                  <div class="tool-button" draggable="true" data-tool="item">Item</div>
+                  <div class="tool-button" draggable="true" data-tool="boss">Boss</div>
+                </div>
+                <div id="room-stage-frame">
+                  <div id="room-stage"></div>
+                </div>
+              </div>
+
+              <div>
+                <h2>Inspector</h2>
+                <label for="room-id-input">Room ID</label>
+                <input id="room-id-input" type="text" />
+                <label for="room-name-input">Room Name</label>
+                <input id="room-name-input" type="text" />
+                <label for="room-type-input">Room Type</label>
+                <select id="room-type-input">
+                  <option value="arena">Arena</option>
+                  <option value="rest">Rest</option>
+                  <option value="boss">Boss</option>
+                  <option value="treasure">Treasure</option>
+                </select>
+
+                <label for="enemy-palette-select">Enemy To Place</label>
+                <select id="enemy-palette-select"></select>
+                <label for="boss-palette-select">Boss To Place</label>
+                <select id="boss-palette-select"></select>
+                <label for="item-palette-select">Item To Place</label>
+                <select id="item-palette-select"></select>
+
+                <label>Selected Object</label>
+                <div id="inspector-selection">Nothing selected.</div>
+                <div class="admin-compact-grid">
+                  <div>
+                    <label for="selected-x">X</label>
+                    <input id="selected-x" type="number" step="10" />
+                  </div>
+                  <div>
+                    <label for="selected-y">Y</label>
+                    <input id="selected-y" type="number" step="10" />
+                  </div>
+                  <div>
+                    <label for="selected-w">W</label>
+                    <input id="selected-w" type="number" step="10" />
+                  </div>
+                  <div>
+                    <label for="selected-h">H</label>
+                    <input id="selected-h" type="number" step="10" />
+                  </div>
+                </div>
+                <button id="selected-delete" class="secondary" style="margin-top: 10px" type="button">Remove Selected</button>
+              </div>
+            </div>
+
+            <div class="admin-row" style="margin-top: 14px">
+              <button id="admin-save" type="button">Save Dungeon</button>
+              <button id="admin-launch-edited" class="warn" type="button">Save + Launch</button>
+              <button id="admin-validate" class="secondary" type="button">Validate JSON</button>
+              <button id="admin-apply-json" class="secondary" type="button">Apply JSON</button>
+            </div>
+            <div id="admin-save-status"></div>
+
+            <details id="json-details" style="margin-top: 14px">
+              <summary>Raw dungeon JSON</summary>
+              <textarea id="admin-dungeon-json" spellcheck="false"></textarea>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="admin-game-bar" hidden>
+      <button id="admin-game-back" class="secondary" type="button">← Admin Panel</button>
+      <span id="admin-game-mode"></span>
+      <button id="admin-game-spectate" class="secondary" type="button">Spectate</button>
+      <button id="admin-game-play" type="button">Join as Player</button>
     </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>

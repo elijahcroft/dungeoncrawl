@@ -26,6 +26,15 @@ export class Bar {
     this.fg.setDepth(101);
   }
 
+  setVisible(visible: boolean) {
+    this.bg.setVisible(visible);
+    this.fg.setVisible(visible);
+  }
+
+  setFillColor(color: number) {
+    this.fg.setFillStyle(color);
+  }
+
   setMax(max: number) {
     this.max = max;
     this.setValue(this.value);

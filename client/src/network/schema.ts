@@ -7,6 +7,7 @@ import { Schema, type, MapSchema } from "@colyseus/schema";
 export class PlayerState extends Schema {
   @type("number") x = 0;
   @type("number") y = 0;
+  @type("number") teleportId = 0;
   @type("number") facingX = 0;
   @type("number") facingY = 1;
   @type("boolean") rolling = false;
@@ -17,6 +18,11 @@ export class PlayerState extends Schema {
   @type("string") className = "warrior";
   @type("number") bonusDamage = 0;
   @type("number") bonusSpeedPct = 0;
+  @type("string") weaponId = "sword";
+  @type("number") lastHitX = 0;
+  @type("number") lastHitY = 0;
+  @type("number") lastHitSeq = 0;
+  @type("number") gold = 0;
 }
 
 export class EnemyState extends Schema {
@@ -31,6 +37,16 @@ export class EnemyState extends Schema {
   @type("string") currentAttackId = "";
   @type("boolean") isBoss = false;
   @type("number") phaseIndex = 0;
+  @type("number") aimX = 0;
+  @type("number") aimY = 0;
+}
+
+export class ProjectileState extends Schema {
+  @type("string") id = "";
+  @type("number") x = 0;
+  @type("number") y = 0;
+  @type("number") radius = 8;
+  @type("string") color = "0xffffff";
 }
 
 export class ItemPickupState extends Schema {
@@ -45,6 +61,7 @@ export class DungeonRoomState extends Schema {
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: EnemyState }) enemies = new MapSchema<EnemyState>();
   @type({ map: ItemPickupState }) items = new MapSchema<ItemPickupState>();
+  @type({ map: ProjectileState }) projectiles = new MapSchema<ProjectileState>();
   @type("string") dungeonId = "";
   @type("string") dungeonName = "";
   @type("string") roomId = "";
@@ -52,8 +69,13 @@ export class DungeonRoomState extends Schema {
   @type("string") roomType = "";
   @type("number") roomIndex = 0;
   @type("number") roomCount = 0;
+  @type("string") roomLayoutJson = "";
+  @type("number") roomRevision = 0;
   @type("boolean") exitOpen = false;
-  @type("string") runPhase = "playing";
+  @type("string") runPhase = "lobby";
   @type("number") resetAt = 0;
   @type("number") clearTimeMs = 0;
+  @type("number") adminCount = 0;
+  @type("string") adminNotice = "";
+  @type("number") adminNoticeId = 0;
 }

@@ -3,8 +3,15 @@
     "id": "grunt",
     "name": "Ashen Grunt",
     "hpMax": 40,
+    "goldReward": 20,
     "aggroRange": 200,
     "color": "0x669944",
+    "visual": {
+      "bodyShape": "slim",
+      "palette": { "body": "0x669944", "trim": "0x2e4a20", "eyes": "0xffee88" },
+      "weapon": "claw",
+      "markings": "spots"
+    },
     "attacks": {
       "jab": {
         "telegraphMs": 400,
@@ -18,12 +25,47 @@
     },
     "phases": [{ "hpThreshold": 100, "attacks": ["jab"] }]
   },
+  "stalker": {
+    "id": "stalker",
+    "name": "Ashen Stalker",
+    "hpMax": 30,
+    "goldReward": 15,
+    "aggroRange": 260,
+    "moveSpeed": 110,
+    "color": "0x884499",
+    "visual": {
+      "bodyShape": "hunched",
+      "palette": { "body": "0x884499", "trim": "0x3a1a44", "eyes": "0xff44ee" },
+      "weapon": "claw",
+      "markings": "stripes"
+    },
+    "attacks": {
+      "rend": {
+        "telegraphMs": 300,
+        "activeMs": 100,
+        "recoverMs": 350,
+        "cooldownMs": 700,
+        "damage": 10,
+        "range": 45,
+        "animationKey": "rend"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["rend"] }]
+  },
   "brute": {
     "id": "brute",
     "name": "Ashen Brute",
     "hpMax": 70,
+    "goldReward": 35,
     "aggroRange": 180,
     "color": "0x996633",
+    "visual": {
+      "bodyShape": "hulking",
+      "palette": { "body": "0x996633", "trim": "0x4a2c14", "eyes": "0xff5533" },
+      "weapon": "club",
+      "accessory": "spikes",
+      "markings": "scars"
+    },
     "attacks": {
       "swing": {
         "telegraphMs": 550,
@@ -36,5 +78,117 @@
       }
     },
     "phases": [{ "hpThreshold": 100, "attacks": ["swing"] }]
+  },
+  "archer": {
+    "id": "archer",
+    "name": "Ashen Archer",
+    "hpMax": 26,
+    "goldReward": 13,
+    "aggroRange": 400,
+    "moveSpeed": 70,
+    "color": "0xb08a4a",
+    "visual": {
+      "bodyShape": "slim",
+      "palette": { "body": "0xb08a4a", "trim": "0x5a4426", "eyes": "0xffcc66" },
+      "weapon": "spear",
+      "accessory": "hood"
+    },
+    "attacks": {
+      "shoot": {
+        "telegraphMs": 650,
+        "activeMs": 120,
+        "recoverMs": 450,
+        "cooldownMs": 1500,
+        "damage": 9,
+        "range": 380,
+        "animationKey": "cast",
+        "projectile": { "speed": 330, "radius": 7, "color": "0xffd27a" }
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["shoot"] }]
+  },
+  "imp": {
+    "id": "imp",
+    "name": "Cinder Imp",
+    "hpMax": 22,
+    "goldReward": 11,
+    "aggroRange": 340,
+    "moveSpeed": 90,
+    "color": "0xd35b2e",
+    "visual": {
+      "bodyShape": "hunched",
+      "size": 0.85,
+      "palette": { "body": "0xd35b2e", "trim": "0x6b2413", "eyes": "0xffee55" },
+      "accessory": "horns",
+      "markings": "spots"
+    },
+    "attacks": {
+      "scorch": {
+        "telegraphMs": 800,
+        "activeMs": 160,
+        "recoverMs": 500,
+        "cooldownMs": 1700,
+        "damage": 12,
+        "range": 72,
+        "castRange": 300,
+        "groundTarget": true,
+        "animationKey": "eruption"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["scorch"] }]
+  },
+  "husk": {
+    "id": "husk",
+    "name": "Grave Skitterer",
+    "hpMax": 14,
+    "goldReward": 7,
+    "aggroRange": 380,
+    "moveSpeed": 150,
+    "color": "0x8a97a8",
+    "visual": {
+      "bodyShape": "hunched",
+      "size": 0.8,
+      "palette": { "body": "0x8a97a8", "trim": "0x3c444f", "eyes": "0xcc2222" },
+      "weapon": "claw",
+      "markings": "scars"
+    },
+    "attacks": {
+      "lunge": {
+        "telegraphMs": 380,
+        "activeMs": 220,
+        "recoverMs": 420,
+        "cooldownMs": 950,
+        "damage": 6,
+        "range": 42,
+        "dashSpeed": 300,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["lunge"] }]
+  },
+  "slimeling": {
+    "id": "slimeling",
+    "name": "Slimeling",
+    "hpMax": 18,
+    "goldReward": 9,
+    "aggroRange": 340,
+    "moveSpeed": 92,
+    "color": "0x59c14a",
+    "visual": {
+      "bodyShape": "blob",
+      "palette": { "body": "0x59c14a", "trim": "0x2f7a2a", "eyes": "0x0d2b0d" }
+    },
+    "attacks": {
+      "hop": {
+        "telegraphMs": 320,
+        "activeMs": 140,
+        "recoverMs": 380,
+        "cooldownMs": 820,
+        "damage": 7,
+        "range": 46,
+        "animationKey": "hop"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["hop"] }]
   }
 }

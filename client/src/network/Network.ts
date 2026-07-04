@@ -1,16 +1,17 @@
 import { Client, Room } from "colyseus.js";
-import { DungeonRoomState, PlayerState, EnemyState, ItemPickupState } from "./schema";
+import { DungeonRoomState, PlayerState, EnemyState, ItemPickupState, ProjectileState } from "./schema";
 
-export type { PlayerState as RemotePlayerState, EnemyState, ItemPickupState, DungeonRoomState };
+export type { PlayerState as RemotePlayerState, EnemyState, ItemPickupState, ProjectileState, DungeonRoomState };
 
 const SERVER_URL = `ws://${window.location.hostname}:2567`;
 const RECONNECT_TOKEN_KEY = "boss_room_reconnect_token";
 
 export interface JoinOptions {
-  dungeonId?: string;
   name?: string;
   color?: string;
   className?: string;
+  role?: "player" | "spectator";
+  adminPin?: string;
 }
 
 export class Network {
@@ -22,14 +23,25 @@ export class Network {
   }
 
   async connect(options: JoinOptions): Promise<Room<DungeonRoomState> | null> {
-    const storedToken = sessionStorage.getItem(RECONNECT_TOKEN_KEY);
+    const role = options.role ?? "player";
+    // Only ordinary players resume via a stored reconnect token; admin
+    // spectate/play sessions always open a fresh connection.
+    const storedToken = role === "player" ? sessionStorage.getItem(RECONNECT_TOKEN_KEY) : null;
     try {
-      const room = storedToken
-        ? await this.client.reconnect<DungeonRoomState>(storedToken, DungeonRoomState)
-        : await this.client.joinOrCreate<DungeonRoomState>("dungeon_room", options, DungeonRoomState);
+      let room: Room<DungeonRoomState>;
+      if (storedToken) {
+        try {
+          room = await this.client.reconnect<DungeonRoomState>(storedToken, DungeonRoomState);
+        } catch {
+          sessionStorage.removeItem(RECONNECT_TOKEN_KEY);
+          room = await this.client.joinOrCreate<DungeonRoomState>("dungeon_room", { ...options, role }, DungeonRoomState);
+        }
+      } else {
+        room = await this.client.joinOrCreate<DungeonRoomState>("dungeon_room", { ...options, role }, DungeonRoomState);
+      }
 
       this.room = room;
-      sessionStorage.setItem(RECONNECT_TOKEN_KEY, room.reconnectionToken);
+      if (role === "player") sessionStorage.setItem(RECONNECT_TOKEN_KEY, room.reconnectionToken);
 
       room.onLeave(() => {
         this.room = null;
@@ -47,11 +59,20 @@ export class Network {
     return this.room !== null;
   }
 
+  leave() {
+    this.room?.leave(true);
+    this.room = null;
+  }
+
   sendMove(x: number, y: number, facingX: number, facingY: number, rolling: boolean) {
     this.room?.send("move", { x, y, facingX, facingY, rolling });
   }
 
   sendEnemyHit(enemyId: string, damage: number) {
     this.room?.send("enemy_hit", { enemyId, damage });
+  }
+
+  sendPlayerHit(targetId: string, damage: number) {
+    this.room?.send("player_hit", { targetId, damage });
   }
 }

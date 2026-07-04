@@ -3,6 +3,7 @@
     "id": "dummy",
     "name": "Dummy Boss",
     "hpMax": 150,
+    "goldReward": 90,
     "aggroRange": 220,
     "color": "0xaa3333",
     "attacks": {
@@ -24,6 +25,7 @@
     "id": "warden",
     "name": "Hollow Warden",
     "hpMax": 140,
+    "goldReward": 85,
     "aggroRange": 220,
     "color": "0x448866",
     "attacks": {
@@ -56,6 +58,7 @@
     "id": "sentinel",
     "name": "Ashen Sentinel",
     "hpMax": 220,
+    "goldReward": 130,
     "aggroRange": 260,
     "color": "0x8855cc",
     "attacks": {
@@ -101,6 +104,305 @@
     "phases": [
       { "hpThreshold": 100, "attacks": ["slam", "dash"], "color": "0x8855cc" },
       { "hpThreshold": 50, "attacks": ["slam_enraged", "dash_enraged"], "color": "0xcc3355" }
+    ]
+  },
+  "vesper": {
+    "id": "vesper",
+    "name": "Vesper, the Hollow King",
+    "hpMax": 260,
+    "goldReward": 155,
+    "aggroRange": 280,
+    "color": "0x557799",
+    "attacks": {
+      "cleave": {
+        "telegraphMs": 620,
+        "activeMs": 200,
+        "recoverMs": 520,
+        "cooldownMs": 1200,
+        "damage": 18,
+        "range": 110,
+        "animationKey": "slam"
+      },
+      "lunge": {
+        "telegraphMs": 480,
+        "activeMs": 340,
+        "recoverMs": 680,
+        "cooldownMs": 1500,
+        "damage": 20,
+        "range": 75,
+        "dashSpeed": 560,
+        "animationKey": "dash"
+      },
+      "cleave_swift": {
+        "telegraphMs": 460,
+        "activeMs": 180,
+        "recoverMs": 380,
+        "cooldownMs": 800,
+        "damage": 20,
+        "range": 115,
+        "animationKey": "slam"
+      },
+      "lunge_swift": {
+        "telegraphMs": 340,
+        "activeMs": 320,
+        "recoverMs": 460,
+        "cooldownMs": 950,
+        "damage": 22,
+        "range": 80,
+        "dashSpeed": 720,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["cleave", "lunge"], "color": "0x557799" },
+      { "hpThreshold": 55, "attacks": ["cleave", "lunge", "cleave_swift"], "color": "0x9966cc" },
+      { "hpThreshold": 25, "attacks": ["cleave_swift", "lunge_swift"], "color": "0xcc3344" }
+    ]
+  },
+  "ember_lich": {
+    "id": "ember_lich",
+    "name": "Morvane, the Ember Lich",
+    "hpMax": 240,
+    "goldReward": 145,
+    "aggroRange": 460,
+    "color": "0xcc6622",
+    "attacks": {
+      "firebolt": {
+        "telegraphMs": 650,
+        "activeMs": 120,
+        "recoverMs": 500,
+        "cooldownMs": 1400,
+        "damage": 12,
+        "range": 460,
+        "animationKey": "cast",
+        "projectile": { "speed": 300, "radius": 10, "count": 3, "spreadDeg": 26, "color": "0xff7733" }
+      },
+      "scorch": {
+        "telegraphMs": 900,
+        "activeMs": 160,
+        "recoverMs": 550,
+        "cooldownMs": 1700,
+        "damage": 16,
+        "range": 85,
+        "castRange": 420,
+        "groundTarget": true,
+        "animationKey": "eruption"
+      },
+      "scorch_swift": {
+        "telegraphMs": 680,
+        "activeMs": 160,
+        "recoverMs": 450,
+        "cooldownMs": 1300,
+        "damage": 18,
+        "range": 95,
+        "castRange": 440,
+        "groundTarget": true,
+        "animationKey": "eruption"
+      },
+      "blink_volley": {
+        "telegraphMs": 550,
+        "activeMs": 120,
+        "recoverMs": 450,
+        "cooldownMs": 1700,
+        "damage": 12,
+        "range": 480,
+        "blink": "away",
+        "animationKey": "cast",
+        "projectile": { "speed": 340, "radius": 10, "count": 5, "spreadDeg": 48, "color": "0xff5522" }
+      },
+      "ring_of_ruin": {
+        "telegraphMs": 1100,
+        "activeMs": 200,
+        "recoverMs": 650,
+        "cooldownMs": 2600,
+        "damage": 22,
+        "range": 250,
+        "rangeMin": 72,
+        "animationKey": "nova"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["firebolt", "firebolt", "scorch"], "color": "0xcc6622" },
+      { "hpThreshold": 60, "attacks": ["firebolt", "scorch_swift", "blink_volley"], "color": "0xe05511" },
+      { "hpThreshold": 30, "attacks": ["blink_volley", "scorch_swift", "ring_of_ruin", "ring_of_ruin"], "color": "0xff3300" }
+    ]
+  },
+  "gravelord": {
+    "id": "gravelord",
+    "name": "Korga, the Gravelord",
+    "hpMax": 320,
+    "goldReward": 190,
+    "aggroRange": 300,
+    "moveSpeed": 55,
+    "color": "0x778088",
+    "attacks": {
+      "stomp": {
+        "telegraphMs": 700,
+        "activeMs": 1000,
+        "recoverMs": 600,
+        "cooldownMs": 1700,
+        "damage": 9,
+        "range": 100,
+        "hits": 3,
+        "hitIntervalMs": 350,
+        "animationKey": "slam"
+      },
+      "quake": {
+        "telegraphMs": 950,
+        "activeMs": 220,
+        "recoverMs": 700,
+        "cooldownMs": 2300,
+        "damage": 18,
+        "range": 240,
+        "rangeMin": 64,
+        "animationKey": "nova"
+      },
+      "quake_swift": {
+        "telegraphMs": 720,
+        "activeMs": 220,
+        "recoverMs": 550,
+        "cooldownMs": 1800,
+        "damage": 20,
+        "range": 260,
+        "rangeMin": 64,
+        "animationKey": "nova"
+      },
+      "charge": {
+        "telegraphMs": 500,
+        "activeMs": 320,
+        "recoverMs": 700,
+        "cooldownMs": 1800,
+        "damage": 16,
+        "range": 70,
+        "dashSpeed": 520,
+        "animationKey": "dash"
+      },
+      "call_husks": {
+        "telegraphMs": 800,
+        "activeMs": 200,
+        "recoverMs": 600,
+        "cooldownMs": 2600,
+        "damage": 10,
+        "range": 90,
+        "animationKey": "summon",
+        "summon": { "enemyId": "husk", "count": 3 }
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["stomp", "quake", "charge"], "color": "0x778088" },
+      { "hpThreshold": 50, "attacks": ["stomp", "quake_swift", "charge", "call_husks"], "color": "0x99aacc" }
+    ]
+  },
+  "broodmother": {
+    "id": "broodmother",
+    "name": "Vhassa, the Broodmother",
+    "hpMax": 280,
+    "goldReward": 165,
+    "aggroRange": 400,
+    "moveSpeed": 46,
+    "color": "0x7a4d8c",
+    "attacks": {
+      "spit": {
+        "telegraphMs": 700,
+        "activeMs": 140,
+        "recoverMs": 500,
+        "cooldownMs": 1500,
+        "damage": 11,
+        "range": 400,
+        "animationKey": "cast",
+        "projectile": { "speed": 240, "radius": 14, "count": 3, "spreadDeg": 40, "color": "0x9be36a" }
+      },
+      "spit_wide": {
+        "telegraphMs": 550,
+        "activeMs": 140,
+        "recoverMs": 450,
+        "cooldownMs": 1300,
+        "damage": 12,
+        "range": 420,
+        "animationKey": "cast",
+        "projectile": { "speed": 270, "radius": 14, "count": 5, "spreadDeg": 72, "color": "0x9be36a" }
+      },
+      "pounce": {
+        "telegraphMs": 520,
+        "activeMs": 620,
+        "recoverMs": 550,
+        "cooldownMs": 1900,
+        "damage": 20,
+        "range": 120,
+        "dashSpeed": 400,
+        "animationKey": "jump",
+        "impactAtEnd": true
+      },
+      "birth": {
+        "telegraphMs": 750,
+        "activeMs": 240,
+        "recoverMs": 650,
+        "cooldownMs": 2400,
+        "damage": 8,
+        "range": 90,
+        "animationKey": "summon",
+        "summon": { "enemyId": "husk", "count": 2 }
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["spit", "pounce", "birth"], "color": "0x7a4d8c" },
+      { "hpThreshold": 45, "attacks": ["spit_wide", "pounce", "pounce", "birth"], "color": "0xa03a6a" }
+    ]
+  },
+  "slime_king": {
+    "id": "slime_king",
+    "name": "Gloop, the Gelatinous King",
+    "hpMax": 300,
+    "goldReward": 180,
+    "aggroRange": 380,
+    "color": "0x59c14a",
+    "attacks": {
+      "pound": {
+        "telegraphMs": 560,
+        "activeMs": 620,
+        "recoverMs": 560,
+        "cooldownMs": 1900,
+        "damage": 22,
+        "range": 130,
+        "dashSpeed": 340,
+        "animationKey": "jump",
+        "impactAtEnd": true
+      },
+      "summon": {
+        "telegraphMs": 700,
+        "activeMs": 260,
+        "recoverMs": 650,
+        "cooldownMs": 2000,
+        "damage": 8,
+        "range": 100,
+        "animationKey": "summon",
+        "summon": { "enemyId": "slimeling", "count": 3 }
+      },
+      "pound_fast": {
+        "telegraphMs": 380,
+        "activeMs": 520,
+        "recoverMs": 420,
+        "cooldownMs": 1300,
+        "damage": 24,
+        "range": 142,
+        "dashSpeed": 470,
+        "animationKey": "jump",
+        "impactAtEnd": true
+      },
+      "summon_more": {
+        "telegraphMs": 600,
+        "activeMs": 240,
+        "recoverMs": 560,
+        "cooldownMs": 1600,
+        "damage": 10,
+        "range": 110,
+        "animationKey": "summon",
+        "summon": { "enemyId": "slimeling", "count": 4 }
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["pound", "pound", "summon"], "color": "0x59c14a" },
+      { "hpThreshold": 50, "attacks": ["pound_fast", "pound_fast", "pound", "summon_more"], "color": "0xa0e04b" }
     ]
   }
 }

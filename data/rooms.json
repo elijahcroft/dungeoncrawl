@@ -1,0 +1,176 @@
+{
+  "straight-arena": {
+    "id": "straight-arena",
+    "name": "Straight Arena",
+    "room": {
+      "id": "arena",
+      "type": "arena",
+      "name": "Arena",
+      "spawns": [
+        "grunt",
+        "grunt",
+        "stalker"
+      ],
+      "entrance": {
+        "x": 80,
+        "y": 320
+      },
+      "exit": {
+        "x": 900,
+        "y": 240,
+        "w": 60,
+        "h": 160
+      },
+      "walls": []
+    }
+  },
+  "rest-armory": {
+    "id": "rest-armory",
+    "name": "Rest Armory",
+    "room": {
+      "id": "rest",
+      "type": "rest",
+      "name": "Rest Armory",
+      "itemSpawns": [
+        {
+          "itemId": "w_sword",
+          "x": 380,
+          "y": 320
+        },
+        {
+          "itemId": "w_spear",
+          "x": 480,
+          "y": 320
+        },
+        {
+          "itemId": "w_axe",
+          "x": 580,
+          "y": 320
+        }
+      ],
+      "entrance": {
+        "x": 80,
+        "y": 320
+      },
+      "exit": {
+        "x": 900,
+        "y": 240,
+        "w": 60,
+        "h": 160
+      },
+      "walls": []
+    }
+  },
+  "boss-chamber": {
+    "id": "boss-chamber",
+    "name": "Boss Chamber",
+    "room": {
+      "id": "boss",
+      "type": "boss",
+      "name": "Boss Chamber",
+      "boss": "sentinel",
+      "bossSpawn": {
+        "x": 640,
+        "y": 320
+      },
+      "entrance": {
+        "x": 80,
+        "y": 320
+      },
+      "exit": null,
+      "walls": []
+    }
+  },
+  "grunt-room-hrpb": {
+    "id": "grunt-room-hrpb",
+    "name": "Grunt Room",
+    "room": {
+      "id": "room-2-2",
+      "type": "arena",
+      "name": "Room 2",
+      "spawns": [
+        "grunt",
+        "grunt",
+        "grunt",
+        "grunt",
+        "grunt",
+        "grunt"
+      ],
+      "enemySpawns": [
+        {
+          "enemyId": "grunt",
+          "x": 130,
+          "y": 510
+        },
+        {
+          "enemyId": "grunt",
+          "x": 100,
+          "y": 350
+        },
+        {
+          "enemyId": "grunt",
+          "x": 530,
+          "y": 300
+        },
+        {
+          "enemyId": "grunt",
+          "x": 640,
+          "y": 300
+        },
+        {
+          "enemyId": "grunt",
+          "x": 400,
+          "y": 430
+        },
+        {
+          "enemyId": "grunt",
+          "x": 400,
+          "y": 290
+        }
+      ],
+      "itemSpawns": [
+        {
+          "itemId": "w_katana",
+          "x": 310,
+          "y": 70
+        }
+      ],
+      "entrance": {
+        "x": 40,
+        "y": 60
+      },
+      "exit": {
+        "x": 900,
+        "y": 240,
+        "w": 60,
+        "h": 160
+      },
+      "walls": [
+        {
+          "x": 200,
+          "y": 0,
+          "w": 40,
+          "h": 460
+        },
+        {
+          "x": 200,
+          "y": 470,
+          "w": 480,
+          "h": 40
+        },
+        {
+          "x": 840,
+          "y": 430,
+          "w": 120,
+          "h": 40
+        },
+        {
+          "x": 840,
+          "y": 160,
+          "w": 40,
+          "h": 300
+        }
+      ]
+    }
+  }
+}
