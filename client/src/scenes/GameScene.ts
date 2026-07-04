@@ -261,9 +261,10 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(102)
       .setScrollFactor(0);
+    // M toggles a persisted master mute for all sound effects.
     this.input.keyboard?.on("keydown-M", () => {
-      sfx.enabled = !sfx.enabled;
-      this.muteText.setText(sfx.enabled ? "" : "SOUND OFF · M");
+      const muted = sfx.toggleMute();
+      this.muteText.setText(muted ? "SOUND OFF · M" : "");
     });
 
     // Offline runs end in a retry prompt instead of a forced page refresh.
