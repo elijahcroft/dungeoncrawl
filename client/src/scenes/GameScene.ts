@@ -4,6 +4,7 @@ import { Enemy, type BossDef } from "../entities/Enemy";
 import { RemotePlayer } from "../entities/RemotePlayer";
 import { BossBar } from "../ui/BossBar";
 import { Hud } from "../ui/Hud";
+import { showDamageText } from "../ui/DamageText";
 import { sfx } from "../audio/sfx";
 import { Network, type RemotePlayerState, type EnemyState, type ItemPickupState, type DungeonRoomState } from "../network/Network";
 import { joinOptions } from "../joinOptions";
@@ -171,7 +172,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnHitParticles(this.player.sprite.x, this.player.sprite.y, 0x4da6ff, 5);
       this.spawnRollTrail();
     };
-    this.player.onHurt = () => this.handlePlayerHurt();
+    this.player.onHurt = (amount) => this.handlePlayerHurt(amount);
     this.player.onDenied = () => {
       sfx.deny();
       this.hud.flashStamina();
@@ -450,20 +451,9 @@ export class GameScene extends Phaser.Scene {
     enemy.applyKnockback(enemy.sprite.x - fromX, enemy.sprite.y - fromY, knock);
   }
 
-  /** Floating damage number that drifts up and fades. */
+  /** Floating damage number over an enemy/PvP target. */
   private spawnDamageNumber(x: number, y: number, amount: number) {
-    const text = this.add
-      .text(x, y, String(Math.round(amount)), { fontSize: "16px", color: "#ffe08a", fontStyle: "bold" })
-      .setOrigin(0.5)
-      .setDepth(60);
-    this.tweens.add({
-      targets: text,
-      y: y - 28,
-      alpha: 0,
-      duration: 600,
-      ease: "Cubic.easeOut",
-      onComplete: () => text.destroy(),
-    });
+    showDamageText(this, x, y, amount);
   }
 
   /** Fading afterimages that trail the player through a dodge roll. */
@@ -497,8 +487,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Player took a hit: red flash + edge-vignette pulse + knockback away from the nearest enemy. */
-  private handlePlayerHurt() {
+  private handlePlayerHurt(amount = 0) {
     sfx.hurt();
+    if (amount > 0) {
+      showDamageText(this, this.player.sprite.x, this.player.sprite.y - 20, amount, { color: "#ff7a6b", fontSize: "18px" });
+    }
     this.cameras.main.shake(120, 0.008);
     this.hurtFlashing = true;
     this.tweens.add({
