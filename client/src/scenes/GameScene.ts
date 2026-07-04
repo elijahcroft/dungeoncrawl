@@ -1656,6 +1656,9 @@ export class GameScene extends Phaser.Scene {
       );
       this.objectiveText.setText(this.objectiveForState(state));
 
+      if (state.runPhase === "lobby") this.hud.setRoomProgress(0, 0);
+      else this.hud.setRoomProgress(state.roomIndex + 1, state.roomCount, state.roomName);
+
       if (state.adminNoticeId !== this.lastAdminNoticeId) {
         this.lastAdminNoticeId = state.adminNoticeId;
         if (state.adminNotice) this.showBanner(state.adminNotice, "#d8e8ff");
