@@ -23,6 +23,7 @@ export class PlayerState extends Schema {
   @type("number") lastHitY = 0;
   @type("number") lastHitSeq = 0;
   @type("number") gold = 0;
+  @type("number") potionCharges = 0;
 }
 
 export class EnemyState extends Schema {

@@ -102,12 +102,14 @@ export class Player {
     right: Phaser.Input.Keyboard.Key;
     roll: Phaser.Input.Keyboard.Key;
     attack: Phaser.Input.Keyboard.Key;
+    useItem: Phaser.Input.Keyboard.Key;
   };
 
   onAttack?: (originX: number, originY: number, dirX: number, dirY: number) => void;
   onSwing?: () => void;
   onRoll?: () => void;
   onHurt?: () => void;
+  onUseItem?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PlayerOptions = {}) {
     this.scene = scene;
@@ -138,6 +140,7 @@ export class Player {
       right: kb.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       roll: kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
       attack: kb.addKey(Phaser.Input.Keyboard.KeyCodes.J),
+      useItem: kb.addKey(Phaser.Input.Keyboard.KeyCodes.E),
     };
   }
 
@@ -404,6 +407,10 @@ export class Player {
         this.attackLungeDir.copy(this.facing);
         this.attackLungeSpeed = (w.lunge / durMs) * 1000;
       }
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.useItem)) {
+      this.onUseItem?.();
     }
 
     this.updateAttackWindow(now);

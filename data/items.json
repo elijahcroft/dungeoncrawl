@@ -20,6 +20,14 @@
     "stat": "damage",
     "amount": 6
   },
+  "potion_heal": {
+    "id": "potion_heal",
+    "name": "Healing Flask",
+    "color": "0xff5566",
+    "itemType": "consumable",
+    "effect": "heal",
+    "amount": 40
+  },
   "w_dagger": { "id": "w_dagger", "name": "Rusty Dagger", "color": "0xbfc6d0", "weaponId": "dagger" },
   "w_sword": { "id": "w_sword", "name": "Iron Sword", "color": "0xcfd6e0", "weaponId": "sword" },
   "w_spear": { "id": "w_spear", "name": "Long Spear", "color": "0xd9dee6", "weaponId": "spear" },

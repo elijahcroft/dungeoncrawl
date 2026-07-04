@@ -46,6 +46,11 @@
           "itemId": "w_axe",
           "x": 580,
           "y": 320
+        },
+        {
+          "itemId": "potion_heal",
+          "x": 480,
+          "y": 420
         }
       ],
       "entrance": {

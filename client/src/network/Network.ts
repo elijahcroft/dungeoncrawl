@@ -75,4 +75,8 @@ export class Network {
   sendPlayerHit(targetId: string, damage: number) {
     this.room?.send("player_hit", { targetId, damage });
   }
+
+  sendUsePotion() {
+    this.room?.send("use_potion");
+  }
 }

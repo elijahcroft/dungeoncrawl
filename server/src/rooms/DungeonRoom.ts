@@ -21,8 +21,13 @@ const itemDefs = JSON.parse(fs.readFileSync(path.join(dataDir, "items.json"), "u
     amount?: number;
     /** When set, picking this up swaps the player's carried weapon instead of granting a stat. */
     weaponId?: string;
+    /** When set, picking this up grants a consumable charge instead of an instant stat. */
+    itemType?: "consumable";
+    effect?: "heal";
   }
 >;
+
+const MAX_POTION_CHARGES = 3;
 
 interface RoomWalls {
   x: number;
@@ -45,6 +50,8 @@ export interface DungeonRoomDef {
   entrance: { x: number; y: number };
   exit: { x: number; y: number; w: number; h: number } | null;
   walls: RoomWalls[];
+  /** World-space placement of this room within the dungeon (client-only rendering). */
+  offset?: { x: number; y: number };
 }
 
 export interface DungeonDef {
@@ -198,6 +205,7 @@ function validateRoomDef(input: unknown, label: string): DungeonRoomDef {
     entrance: requirePoint(input, "entrance", label),
     exit: exitValue === null || exitValue === undefined ? null : parseRect(exitValue, `${label}.exit`),
     walls: wallsValue.map((wall, wallIndex) => parseRect(wall, `${label}.walls[${wallIndex}]`)),
+    offset: optionalPoint(input, "offset", label),
   };
 }
 
@@ -247,6 +255,9 @@ export function upsertRoomTemplateDef(input: unknown): RoomTemplateDef {
   return template;
 }
 
+const ROOM_W = 960;
+const ROOM_H = 640;
+const CORRIDOR_FALLBACK_GAP = 220; // mirrors the client when a room lacks an authored offset
 const RECONNECT_GRACE_SECONDS = 20;
 const SIMULATION_INTERVAL_MS = 50;
 const PLAYER_HP_MAX = 100;
@@ -277,6 +288,7 @@ export class PlayerState extends Schema {
   @type("number") lastHitY = 0;
   @type("number") lastHitSeq = 0;
   @type("number") gold = 0;
+  @type("number") potionCharges = 0;
 }
 
 export class EnemyState extends Schema {
@@ -398,6 +410,15 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       }
     });
 
+    this.onMessage("use_potion", (client) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player || player.hp <= 0 || player.potionCharges <= 0) return;
+      const def = Object.values(itemDefs).find((item) => item.itemType === "consumable" && item.effect === "heal");
+      if (!def) return;
+      player.potionCharges -= 1;
+      player.hp = Math.min(player.hpMax, player.hp + (def.amount ?? 0));
+    });
+
     // PvP is only live while everyone is idling in the lobby, not mid-dungeon.
     this.onMessage("player_hit", (client, message: { targetId: string; damage: number }) => {
       if (this.state.runPhase !== "lobby") return;
@@ -429,7 +450,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       this.runStartedAt = Date.now();
       this.state.runPhase = "playing";
       this.state.clearTimeMs = 0;
-      this.loadRoom(0, true);
+      this.activateRoom(0, true);
     });
 
     this.onMessage("admin_next_room", (client) => {
@@ -440,7 +461,9 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         this.triggerVictory("Admin ended the dungeon.");
       } else {
         this.announce("Admin moved everyone to the next room.");
-        this.loadRoom(nextIndex);
+        // Admin override: pull everyone into the next room (not a walked transition).
+        this.activateRoom(nextIndex);
+        this.positionPlayersAt(this.worldEntrance(nextIndex));
       }
     });
 
@@ -486,6 +509,26 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     return this.dungeonDef?.rooms[this.state.roomIndex] ?? null;
   }
 
+  /** World-space placement of a room within the dungeon (authored `offset`, or a horizontal fallback). */
+  private roomOffset(index: number): { x: number; y: number } {
+    const room = this.dungeonDef?.rooms[index];
+    return room?.offset ?? { x: index * (ROOM_W + CORRIDOR_FALLBACK_GAP), y: 0 };
+  }
+
+  /** Where players appear/respawn inside a room, in world space. */
+  private worldEntrance(index: number): { x: number; y: number } {
+    const room = this.dungeonDef?.rooms[index];
+    const off = this.roomOffset(index);
+    const local = room?.entrance ?? { x: 80, y: 320 };
+    return { x: off.x + local.x, y: off.y + local.y };
+  }
+
+  /** True when (x, y) lies inside the given room's rect. */
+  private insideRoom(index: number, x: number, y: number): boolean {
+    const off = this.roomOffset(index);
+    return x >= off.x && x <= off.x + ROOM_W && y >= off.y && y <= off.y + ROOM_H;
+  }
+
   private requireAdmin(client: Client): boolean {
     if (this.admins.has(client.sessionId)) return true;
     client.send("admin_error", { message: "Admin access required." });
@@ -522,8 +565,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
   }
 
   private gatherPlayers() {
-    const roomDef = this.currentRoomDef();
-    this.positionPlayersAt(roomDef?.entrance ?? LOBBY_LAYOUT.entrance);
+    this.positionPlayersAt(this.dungeonDef ? this.worldEntrance(this.state.roomIndex) : LOBBY_LAYOUT.entrance);
   }
 
   private launchDungeon(dungeonId: string) {
@@ -542,7 +584,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.state.resetAt = 0;
     this.runStartedAt = Date.now();
     this.announce(`Launching ${dungeonDef.name}.`);
-    this.loadRoom(0, true);
+    this.activateRoom(0, true);
   }
 
   private loadLobby(message?: string) {
@@ -577,20 +619,21 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     return Math.round(baseHpMax * (1 + 0.35 * (playerCount - 1)));
   }
 
-  private loadRoom(index: number, resetPlayers = false) {
+  /**
+   * Makes `index` the live room: clears the previous room's contents and spawns
+   * this room's enemies/items in world space. Players are NOT teleported — they
+   * walk in through the corridor — unless `resetPlayers` (launch/restart/wipe),
+   * which resets stats and drops everyone at the room's entrance.
+   */
+  private activateRoom(index: number, resetPlayers = false) {
     if (!this.dungeonDef) return;
     const roomDef = this.dungeonDef.rooms[index];
+    const off = this.roomOffset(index);
     this.state.roomIndex = index;
     this.state.roomId = roomDef.id;
     this.state.roomName = roomDef.name;
     this.state.roomType = roomDef.type;
-    this.state.roomLayoutJson = JSON.stringify({
-      entrance: roomDef.entrance,
-      exit: roomDef.exit,
-      walls: roomDef.walls,
-    } satisfies RoomLayoutSnapshot);
     this.state.roomRevision += 1;
-    this.state.exitOpen = roomDef.type === "rest" || roomDef.type === "treasure";
     this.state.runPhase = "playing";
     this.state.resetAt = 0;
     this.state.enemies.clear();
@@ -603,7 +646,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     if (roomDef.type === "boss" && roomDef.boss) {
       const def = bossDefs[roomDef.boss];
       const spawn = roomDef.bossSpawn ?? { x: 640, y: 320 };
-      const logic = new BossLogic(def, spawn.x, spawn.y);
+      const logic = new BossLogic(def, off.x + spawn.x, off.y + spawn.y);
       logic.hp = this.scaledHpMax(def.hpMax);
       logic.hpMax = logic.hp;
       const id = "boss";
@@ -627,9 +670,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         const defId = spawn.enemyId;
         const def = enemyDefs[defId];
         if (!def) return;
-        const x = spawn.x;
-        const y = spawn.y;
-        const logic = new BossLogic(def, x, y);
+        const logic = new BossLogic(def, off.x + spawn.x, off.y + spawn.y);
         logic.hp = this.scaledHpMax(def.hpMax);
         logic.hpMax = logic.hp;
         const id = `${defId}_${i}`;
@@ -645,8 +686,8 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       const item = new ItemPickupState();
       item.id = "pickup_0";
       item.itemId = roomDef.item;
-      item.x = 480;
-      item.y = 320;
+      item.x = off.x + 480;
+      item.y = off.y + 320;
       this.state.items.set(item.id, item);
     }
 
@@ -655,29 +696,42 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       const item = new ItemPickupState();
       item.id = `spawn_${i}`;
       item.itemId = spawn.itemId;
-      item.x = spawn.x;
-      item.y = spawn.y;
+      item.x = off.x + spawn.x;
+      item.y = off.y + spawn.y;
       this.state.items.set(item.id, item);
     });
 
-    const entrance = roomDef.entrance;
-    let i = 0;
-    this.state.players.forEach((player) => {
-      const yOffset = (i % 5) * 24 - 48;
-      if (resetPlayers) {
+    // A room with nothing to fight is cleared on arrival, so its door opens at once.
+    this.state.exitOpen = this.enemyLogics.size === 0;
+
+    if (resetPlayers) {
+      let i = 0;
+      const entrance = this.worldEntrance(index);
+      this.state.players.forEach((player) => {
         const stats = CLASS_STATS[player.className] ?? CLASS_STATS.warrior;
         player.hpMax = stats.hpMax;
         player.bonusDamage = 0;
         player.bonusSpeedPct = stats.speedPct;
         player.weaponId = "sword";
         player.gold = 0;
-      }
-      player.hp = player.hpMax;
-      this.teleportPlayer(player, entrance.x, entrance.y + yOffset);
-      i += 1;
-    });
+        player.potionCharges = 0;
+        player.hp = player.hpMax;
+        this.teleportPlayer(player, entrance.x, entrance.y + (i % 5) * 24 - 48);
+        i += 1;
+      });
+    }
 
     this.syncEnemyStates();
+  }
+
+  /** Keep enemies from wandering out of their room through the doorways. */
+  private clampEnemiesToRoom() {
+    const off = this.roomOffset(this.state.roomIndex);
+    const margin = 40;
+    this.enemyLogics.forEach((logic) => {
+      logic.x = Math.min(off.x + ROOM_W - margin, Math.max(off.x + margin, logic.x));
+      logic.y = Math.min(off.y + ROOM_H - margin, Math.max(off.y + margin, logic.y));
+    });
   }
 
   private syncEnemyStates() {
@@ -728,11 +782,12 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       if (id.startsWith("minion_") && logic.isAlive) living += 1;
     });
     const allowed = Math.max(0, Math.min(count, MINION_CAP - living));
+    const off = this.roomOffset(this.state.roomIndex);
     for (let i = 0; i < allowed; i++) {
       const angle = (Math.PI * 2 * i) / Math.max(1, allowed) + Math.random() * 0.6;
       const radius = 46 + Math.random() * 26;
-      const mx = Math.min(912, Math.max(48, x + Math.cos(angle) * radius));
-      const my = Math.min(592, Math.max(48, y + Math.sin(angle) * radius));
+      const mx = Math.min(off.x + ROOM_W - 48, Math.max(off.x + 48, x + Math.cos(angle) * radius));
+      const my = Math.min(off.y + ROOM_H - 48, Math.max(off.y + 48, y + Math.sin(angle) * radius));
       const logic = new BossLogic(def, mx, my);
       logic.hp = this.scaledHpMax(def.hpMax);
       logic.hpMax = logic.hp;
@@ -784,7 +839,8 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         if (this.state.runPhase === "victory") {
           this.loadLobby("Dungeon cleared. Waiting for admin.");
         } else {
-          this.loadRoom(0, true);
+          this.state.runPhase = "playing";
+          this.activateRoom(0, true);
         }
       }
       return;
@@ -793,7 +849,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     const roomDef = this.currentRoomDef();
     if (!roomDef || !this.dungeonDef) return;
 
-    this.respawnDownedPlayers(now, roomDef.entrance);
+    this.respawnDownedPlayers(now, this.worldEntrance(this.state.roomIndex));
 
     // Item pickups (proximity auto-pickup).
     this.state.items.forEach((item) => {
@@ -805,7 +861,9 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         const def = itemDefs[item.itemId];
         if (!def) return;
         item.taken = true;
-        if (def.weaponId) {
+        if (def.itemType === "consumable") {
+          player.potionCharges = Math.min(MAX_POTION_CHARGES, player.potionCharges + 1);
+        } else if (def.weaponId) {
           player.weaponId = def.weaponId;
         } else if (def.stat === "hpMax") {
           player.hpMax += def.amount ?? 0;
@@ -844,6 +902,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       if (logic.isAlive) anyAlive = true;
     });
     for (const req of spawnRequests) this.spawnMinions(req.enemyId, req.count, req.x, req.y);
+    this.clampEnemiesToRoom();
     this.syncEnemyStates();
 
     const combatRoom = roomDef.type === "arena" || roomDef.type === "boss";
@@ -851,31 +910,19 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       this.state.exitOpen = true;
     }
 
-    // Exit transition: every living player standing in the exit zone.
+    // Progression: once the room is cleared its door opens (client-side collision).
+    // The last room clears into victory; otherwise the next room wakes up the
+    // moment a living player physically walks into it — no teleport.
     if (this.state.exitOpen) {
-      if (roomDef.exit === null) {
+      const nextIndex = this.state.roomIndex + 1;
+      if (nextIndex >= this.dungeonDef.rooms.length) {
         this.triggerVictory();
-      } else {
-        const exit = roomDef.exit;
-        const hasPlayers = this.state.players.size > 0;
-        const allInExit = [...this.state.players.entries()].every(
-          ([sessionId, player]) =>
-            this.disconnecting.has(sessionId) ||
-            player.hp <= 0 ||
-            (player.x >= exit.x && player.x <= exit.x + exit.w && player.y >= exit.y && player.y <= exit.y + exit.h),
-        );
-        const anyAlivePlayer = [...this.state.players.entries()].some(
-          ([sessionId, player]) => player.hp > 0 && !this.disconnecting.has(sessionId),
-        );
-        if (hasPlayers && anyAlivePlayer && allInExit) {
-          const nextIndex = this.state.roomIndex + 1;
-          if (nextIndex >= this.dungeonDef.rooms.length) {
-            this.triggerVictory();
-          } else {
-            this.loadRoom(nextIndex);
-          }
-        }
+        return;
       }
+      const entered = [...this.state.players.entries()].some(
+        ([sessionId, player]) => player.hp > 0 && !this.disconnecting.has(sessionId) && this.insideRoom(nextIndex, player.x, player.y),
+      );
+      if (entered) this.activateRoom(nextIndex);
       return;
     }
 
@@ -925,7 +972,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     player.bonusSpeedPct = stats.speedPct;
     player.name = (options.name ?? "Player").slice(0, 16);
     player.color = options.color ?? "0x4da6ff";
-    const entrance = this.currentRoomDef()?.entrance ?? LOBBY_LAYOUT.entrance;
+    const entrance = this.dungeonDef ? this.worldEntrance(this.state.roomIndex) : LOBBY_LAYOUT.entrance;
     const offset = this.state.players.size % 5;
     this.teleportPlayer(player, entrance.x, entrance.y + offset * 24 - 48);
     this.state.players.set(client.sessionId, player);
