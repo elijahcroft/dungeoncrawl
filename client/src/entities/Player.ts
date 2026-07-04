@@ -108,7 +108,7 @@ export class Player {
   onAttack?: (originX: number, originY: number, dirX: number, dirY: number) => void;
   onSwing?: () => void;
   onRoll?: () => void;
-  onHurt?: () => void;
+  onHurt?: (amount: number) => void;
   onUseItem?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PlayerOptions = {}) {
@@ -260,11 +260,12 @@ export class Player {
 
   takeDamage(amount: number) {
     if (this.isInvulnerable || !this.isAlive) return;
+    const dealt = Math.min(amount, this.hp);
     this.hp = Math.max(0, this.hp - amount);
     this.invulnerableUntil = this.scene.time.now + HIT_IFRAME_MS;
     this.flashTint(0xff4d4d, 120);
     this.popScale(1.18, 0.84); // recoil squash on hit
-    this.onHurt?.();
+    this.onHurt?.(dealt);
   }
 
   /** Reconcile local HP with the server's authoritative value (multiplayer mode). */
@@ -272,6 +273,7 @@ export class Player {
     const nextHp = Math.max(0, hp);
     const wasAlive = this.hp > 0;
     const tookDamage = nextHp < this.hp;
+    const dealt = this.hp - nextHp;
     this.hp = nextHp;
     if (hpMax !== undefined) this.hpMax = hpMax;
 
@@ -284,7 +286,7 @@ export class Player {
     if (tookDamage) {
       this.flashTint(0xff4d4d, 120);
       this.popScale(1.18, 0.84); // recoil squash on hit
-      this.onHurt?.();
+      this.onHurt?.(dealt);
     }
   }
 
