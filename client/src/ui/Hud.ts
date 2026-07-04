@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { Bar } from "./Bar";
+import { RoomProgress } from "./RoomProgress";
 
 /**
  * Top-left player status panel: name, HP/stamina/weapon-cooldown bars, gold,
@@ -16,6 +17,7 @@ export class Hud {
   private cooldownLabel: Phaser.GameObjects.Text;
   private goldText: Phaser.GameObjects.Text;
   private potionText: Phaser.GameObjects.Text;
+  private roomProgress: RoomProgress;
 
   constructor(scene: Phaser.Scene, name: string) {
     this.scene = scene;
@@ -67,6 +69,8 @@ export class Hud {
 
     // Bar backgrounds/foregrounds are created outside the container (screen-space
     // rectangles at fixed depth) — pull them onto the same depth band as the panel.
+
+    this.roomProgress = new RoomProgress(scene);
   }
 
   setVisible(visible: boolean) {
@@ -74,6 +78,12 @@ export class Hud {
     this.hpBar.setVisible(visible);
     this.staminaBar.setVisible(visible);
     this.cooldownBar.setVisible(visible);
+    this.roomProgress.setVisible(visible);
+  }
+
+  /** current is 1-based; pass total 0 to hide the readout (e.g. in the lobby). */
+  setRoomProgress(current: number, total: number, name?: string) {
+    this.roomProgress.update(current, total, name);
   }
 
   setHpMax(max: number) {
