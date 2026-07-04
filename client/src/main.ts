@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { Client, type Room } from "colyseus.js";
 import { GameScene } from "./scenes/GameScene";
 import { joinOptions } from "./joinOptions";
+import { getStats, formatSummary } from "./progression";
 import { DungeonRoomState } from "./network/schema";
 import dungeonsData from "../../data/dungeons.json";
 import roomsData from "../../data/rooms.json";
@@ -134,6 +135,13 @@ function setupPlayerJoin() {
   overlay.hidden = false;
   adminOverlay.hidden = true;
   app.hidden = false;
+
+  const progressSummary = document.getElementById("progress-summary")!;
+  const stats = getStats();
+  if (stats.runsPlayed > 0) {
+    progressSummary.textContent = formatSummary(stats);
+    progressSummary.hidden = false;
+  }
 
   // joinOptions starts with a randomly-rolled armored look; highlight the swatch
   // matching the rolled body color so the form reflects what the player will spawn as.

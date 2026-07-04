@@ -9,6 +9,7 @@ import { PauseMenu } from "../ui/PauseMenu";
 import { sfx } from "../audio/sfx";
 import { Network, type RemotePlayerState, type EnemyState, type ItemPickupState, type DungeonRoomState } from "../network/Network";
 import { joinOptions } from "../joinOptions";
+import { recordRun, bumpBossDefeated } from "../progression";
 import bossesData from "../../../data/bosses.json";
 import enemiesData from "../../../data/enemies.json";
 import dungeonsData from "../../../data/dungeons.json";
@@ -100,6 +101,7 @@ export class GameScene extends Phaser.Scene {
   private wasPlayerAlive = true;
   private offlineBossWasAlive = true;
   private lastRunPhase = "playing";
+  private lastBossDefId = ""; // remembered so a victory can credit the boss just cleared
   private hurtFlashing = false;
 
   // Spectator = an admin watching the room with no controllable body.
@@ -1679,9 +1681,12 @@ export class GameScene extends Phaser.Scene {
           enemyState.aimX,
           enemyState.aimY,
         );
-        if (enemy.isBoss && enemy.isAlive) {
-          boss = enemy;
-          bossState = enemyState;
+        if (enemy.isBoss) {
+          this.lastBossDefId = enemyState.defId;
+          if (enemy.isAlive) {
+            boss = enemy;
+            bossState = enemyState;
+          }
         }
       }
       this.updateBossBar(boss, bossState);
@@ -1764,8 +1769,13 @@ export class GameScene extends Phaser.Scene {
         if (state.runPhase === "victory") {
           sfx.victory();
           this.showBanner("DUNGEON CLEARED", "#e8d8b0");
+          if (!this.spectator) {
+            recordRun({ won: true, clearMs: state.clearTimeMs });
+            bumpBossDefeated(this.lastBossDefId);
+          }
         } else if (state.runPhase === "wiped") {
           this.showBanner("TEAM WIPED", "#a01818");
+          if (!this.spectator) recordRun({ won: false });
         }
         this.lastRunPhase = state.runPhase;
       }
