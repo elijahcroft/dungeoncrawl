@@ -277,6 +277,12 @@ const ENEMY_SPREAD_X = [560, 720, 640];
 const ENEMY_SPREAD_Y = [280, 280, 420];
 /** Ceiling on how many boss-summoned minions may be alive at once, so a summon attack can't snowball the arena. */
 const MINION_CAP = 6;
+/** Player count above which difficulty stops scaling, so a very full room stays winnable. */
+const MAX_SCALING_PLAYERS = 8;
+/** Enemy max-HP bonus per extra player beyond the first. */
+const HP_SCALE_PER_PLAYER = 0.35;
+/** Enemy damage bonus per extra player beyond the first (milder than HP). */
+const DAMAGE_SCALE_PER_PLAYER = 0.15;
 
 export class PlayerState extends Schema {
   @type("number") x = 0;
@@ -386,6 +392,8 @@ export class DungeonRoom extends Room<DungeonRoomState> {
   private disconnecting = new Set<string>();
   private admins = new Set<string>();
   private spectators = new Set<string>();
+  /** Enemy damage multiplier fixed when the current room loads (see activateRoom). */
+  private enemyDamageScale = 1;
 
   onAuth(_client: Client, options: JoinOptions) {
     const privileged = options.role === "admin" || options.role === "spectator";
@@ -645,10 +653,14 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     if (message) this.announce(message);
   }
 
+  /** Player count used to scale difficulty, clamped so a very full room stays winnable. */
+  private scalingPlayerCount(): number {
+    return Math.min(MAX_SCALING_PLAYERS, Math.max(1, this.state.players.size));
+  }
+
   private scaledHpMax(baseHpMax: number): number {
     // Difficulty scales gently with player count so a full party doesn't trivialize fights.
-    const playerCount = Math.max(1, this.state.players.size);
-    return Math.round(baseHpMax * (1 + 0.35 * (playerCount - 1)));
+    return Math.round(baseHpMax * (1 + HP_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1)));
   }
 
   /**
@@ -674,6 +686,8 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.enemyLogics.clear();
     this.minionCounter = 0;
     this.respawnAt.clear();
+    // Fix the enemy damage multiplier for this room at load time so mid-fight joins/leaves don't shift it.
+    this.enemyDamageScale = 1 + DAMAGE_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1);
 
     if (roomDef.type === "boss" && roomDef.boss && bossDefs[roomDef.boss]) {
       const def = bossDefs[roomDef.boss];
@@ -921,7 +935,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       for (const event of events) {
         const player = this.state.players.get(event.targetId);
         if (!player || player.rolling || player.hp <= 0) continue;
-        player.hp = Math.max(0, player.hp - event.damage);
+        player.hp = Math.max(0, player.hp - event.damage * this.enemyDamageScale);
         player.lastHitX = logic.x;
         player.lastHitY = logic.y;
         player.lastHitSeq += 1;

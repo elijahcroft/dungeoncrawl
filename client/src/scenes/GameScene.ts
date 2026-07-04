@@ -4,9 +4,12 @@ import { Enemy, type BossDef } from "../entities/Enemy";
 import { RemotePlayer } from "../entities/RemotePlayer";
 import { BossBar } from "../ui/BossBar";
 import { Hud } from "../ui/Hud";
+import { showDamageText } from "../ui/DamageText";
+import { PauseMenu } from "../ui/PauseMenu";
 import { sfx } from "../audio/sfx";
 import { Network, type RemotePlayerState, type EnemyState, type ItemPickupState, type DungeonRoomState } from "../network/Network";
 import { joinOptions } from "../joinOptions";
+import { recordRun, bumpBossDefeated } from "../progression";
 import bossesData from "../../../data/bosses.json";
 import enemiesData from "../../../data/enemies.json";
 import dungeonsData from "../../../data/dungeons.json";
@@ -84,6 +87,7 @@ const MELEE_PLAYER_HURT_RADIUS = 16;
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private hud!: Hud;
+  private pauseMenu!: PauseMenu;
   private hint!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private roomText!: Phaser.GameObjects.Text;
@@ -97,6 +101,7 @@ export class GameScene extends Phaser.Scene {
   private wasPlayerAlive = true;
   private offlineBossWasAlive = true;
   private lastRunPhase = "playing";
+  private lastBossDefId = ""; // remembered so a victory can credit the boss just cleared
   private hurtFlashing = false;
 
   // Spectator = an admin watching the room with no controllable body.
@@ -171,7 +176,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnHitParticles(this.player.sprite.x, this.player.sprite.y, 0x4da6ff, 5);
       this.spawnRollTrail();
     };
-    this.player.onHurt = () => this.handlePlayerHurt();
+    this.player.onHurt = (amount) => this.handlePlayerHurt(amount);
     this.player.onDenied = () => {
       sfx.deny();
       this.hud.flashStamina();
@@ -252,6 +257,11 @@ export class GameScene extends Phaser.Scene {
       .setDepth(200)
       .setAlpha(0);
 
+    // Controls overlay: ESC toggles it. Client-side only — it never pauses the
+    // networked sim, so co-op partners and the server keep running underneath.
+    this.pauseMenu = new PauseMenu(this);
+    this.input.keyboard?.on("keydown-ESC", () => this.pauseMenu.toggle());
+
     // Web Audio starts suspended; resume it on the first key/pointer input.
     this.input.keyboard?.once("keydown", () => sfx.resume());
     this.input.once("pointerdown", () => sfx.resume());
@@ -261,9 +271,10 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(102)
       .setScrollFactor(0);
+    // M toggles a persisted master mute for all sound effects.
     this.input.keyboard?.on("keydown-M", () => {
-      sfx.enabled = !sfx.enabled;
-      this.muteText.setText(sfx.enabled ? "" : "SOUND OFF · M");
+      const muted = sfx.toggleMute();
+      this.muteText.setText(muted ? "SOUND OFF · M" : "");
     });
 
     // Offline runs end in a retry prompt instead of a forced page refresh.
@@ -449,20 +460,9 @@ export class GameScene extends Phaser.Scene {
     enemy.applyKnockback(enemy.sprite.x - fromX, enemy.sprite.y - fromY, knock);
   }
 
-  /** Floating damage number that drifts up and fades. */
+  /** Floating damage number over an enemy/PvP target. */
   private spawnDamageNumber(x: number, y: number, amount: number) {
-    const text = this.add
-      .text(x, y, String(Math.round(amount)), { fontSize: "16px", color: "#ffe08a", fontStyle: "bold" })
-      .setOrigin(0.5)
-      .setDepth(60);
-    this.tweens.add({
-      targets: text,
-      y: y - 28,
-      alpha: 0,
-      duration: 600,
-      ease: "Cubic.easeOut",
-      onComplete: () => text.destroy(),
-    });
+    showDamageText(this, x, y, amount);
   }
 
   /** Fading afterimages that trail the player through a dodge roll. */
@@ -496,8 +496,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Player took a hit: red flash + edge-vignette pulse + knockback away from the nearest enemy. */
-  private handlePlayerHurt() {
+  private handlePlayerHurt(amount = 0) {
     sfx.hurt();
+    if (amount > 0) {
+      showDamageText(this, this.player.sprite.x, this.player.sprite.y - 20, amount, { color: "#ff7a6b", fontSize: "18px" });
+    }
     this.cameras.main.shake(120, 0.008);
     this.hurtFlashing = true;
     this.tweens.add({
@@ -1678,9 +1681,12 @@ export class GameScene extends Phaser.Scene {
           enemyState.aimX,
           enemyState.aimY,
         );
-        if (enemy.isBoss && enemy.isAlive) {
-          boss = enemy;
-          bossState = enemyState;
+        if (enemy.isBoss) {
+          this.lastBossDefId = enemyState.defId;
+          if (enemy.isAlive) {
+            boss = enemy;
+            bossState = enemyState;
+          }
         }
       }
       this.updateBossBar(boss, bossState);
@@ -1745,6 +1751,9 @@ export class GameScene extends Phaser.Scene {
       );
       this.objectiveText.setText(this.objectiveForState(state));
 
+      if (state.runPhase === "lobby") this.hud.setRoomProgress(0, 0);
+      else this.hud.setRoomProgress(state.roomIndex + 1, state.roomCount, state.roomName);
+
       if (state.adminNoticeId !== this.lastAdminNoticeId) {
         this.lastAdminNoticeId = state.adminNoticeId;
         if (state.adminNotice) this.showBanner(state.adminNotice, "#d8e8ff");
@@ -1760,8 +1769,13 @@ export class GameScene extends Phaser.Scene {
         if (state.runPhase === "victory") {
           sfx.victory();
           this.showBanner("DUNGEON CLEARED", "#e8d8b0");
+          if (!this.spectator) {
+            recordRun({ won: true, clearMs: state.clearTimeMs });
+            bumpBossDefeated(this.lastBossDefId);
+          }
         } else if (state.runPhase === "wiped") {
           this.showBanner("TEAM WIPED", "#a01818");
+          if (!this.spectator) recordRun({ won: false });
         }
         this.lastRunPhase = state.runPhase;
       }

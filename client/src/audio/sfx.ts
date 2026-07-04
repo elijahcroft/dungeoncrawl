@@ -7,8 +7,15 @@
 
 type OscType = "sine" | "square" | "sawtooth" | "triangle";
 
+/** Global mixer level baked into every synthesized sound before user volume. */
+const BASE_GAIN = 0.32;
+
 class Sfx {
   enabled = true;
+  /** User master volume 0..1, persisted to localStorage. */
+  private volume = readVolume();
+  /** Persisted mute flag; overrides volume when true. */
+  private muted = readMuted();
   private ctx?: AudioContext;
   private master?: GainNode;
   private noiseBuffer?: AudioBuffer;
@@ -19,7 +26,7 @@ class Sfx {
     if (!Ctor) return undefined;
     const ctx = new Ctor();
     const master = ctx.createGain();
-    master.gain.value = 0.32;
+    master.gain.value = this.masterLevel();
     master.connect(ctx.destination);
     // One second of white noise, reused for every percussive/whoosh effect.
     const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
@@ -35,6 +42,31 @@ class Sfx {
   resume() {
     const ctx = this.ensure();
     if (ctx && ctx.state === "suspended") void ctx.resume();
+  }
+
+  /** Effective master gain, silenced when muted. */
+  private masterLevel() {
+    return this.muted ? 0 : BASE_GAIN * this.volume;
+  }
+
+  /** Push the current volume/mute state onto the live master gain node. */
+  private applyMaster() {
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.masterLevel(), this.ctx.currentTime, 0.01);
+  }
+
+  /** Set master volume (0..1) and persist it. */
+  setVolume(v: number) {
+    this.volume = Math.min(1, Math.max(0, v));
+    localStorage.setItem("dg_volume", String(this.volume));
+    this.applyMaster();
+  }
+
+  /** Flip the persisted mute flag and silence/restore audio live. Returns new state. */
+  toggleMute() {
+    this.muted = !this.muted;
+    localStorage.setItem("dg_muted", this.muted ? "1" : "0");
+    this.applyMaster();
+    return this.muted;
   }
 
   private now() {
@@ -168,6 +200,18 @@ class Sfx {
     const notes = [523, 659, 784, 1047];
     notes.forEach((f, i) => this.tone(f, 0.3, "triangle", 0.24, undefined, i * 0.12));
   }
+}
+
+/** Read persisted volume (0..1), defaulting to 0.8. */
+function readVolume(): number {
+  const stored = localStorage.getItem("dg_volume");
+  if (stored === null) return 0.8;
+  const raw = Number(stored);
+  return Number.isFinite(raw) && raw >= 0 && raw <= 1 ? raw : 0.8;
+}
+
+function readMuted(): boolean {
+  return localStorage.getItem("dg_muted") === "1";
 }
 
 export const sfx = new Sfx();
