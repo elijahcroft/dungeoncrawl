@@ -404,5 +404,57 @@
       { "hpThreshold": 100, "attacks": ["pound", "pound", "summon"], "color": "0x59c14a" },
       { "hpThreshold": 50, "attacks": ["pound_fast", "pound_fast", "pound", "summon_more"], "color": "0xa0e04b" }
     ]
+  },
+  "frostbound_warden": {
+    "id": "frostbound_warden",
+    "name": "Frostbound Warden",
+    "hpMax": 250,
+    "goldReward": 150,
+    "aggroRange": 270,
+    "color": "0x4a9fd4",
+    "attacks": {
+      "frost_slam": {
+        "telegraphMs": 680,
+        "activeMs": 190,
+        "recoverMs": 560,
+        "cooldownMs": 1250,
+        "damage": 17,
+        "range": 105,
+        "animationKey": "slam"
+      },
+      "glacial_charge": {
+        "telegraphMs": 520,
+        "activeMs": 340,
+        "recoverMs": 700,
+        "cooldownMs": 1650,
+        "damage": 19,
+        "range": 72,
+        "dashSpeed": 500,
+        "animationKey": "dash"
+      },
+      "frost_slam_enraged": {
+        "telegraphMs": 460,
+        "activeMs": 170,
+        "recoverMs": 410,
+        "cooldownMs": 880,
+        "damage": 19,
+        "range": 110,
+        "animationKey": "slam"
+      },
+      "glacial_charge_enraged": {
+        "telegraphMs": 360,
+        "activeMs": 320,
+        "recoverMs": 500,
+        "cooldownMs": 1120,
+        "damage": 21,
+        "range": 78,
+        "dashSpeed": 660,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["frost_slam", "glacial_charge"], "color": "0x4a9fd4" },
+      { "hpThreshold": 50, "attacks": ["frost_slam_enraged", "glacial_charge_enraged"], "color": "0x2255cc" }
+    ]
   }
 }
