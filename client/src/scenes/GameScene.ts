@@ -241,6 +241,9 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.once("keydown", () => sfx.resume());
     this.input.once("pointerdown", () => sfx.resume());
 
+    // M toggles a persisted master mute for all sound effects.
+    this.input.keyboard?.on("keydown-M", () => sfx.toggleMute());
+
     this.game.events.on("boss-telegraph", () => sfx.bossTelegraph());
 
     this.spectator = joinOptions.spectator === true;
