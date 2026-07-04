@@ -148,6 +148,17 @@ class Sfx {
     this.noise(0.14, 0.22, 1800, "bandpass");
   }
 
+  /** Soft rising chime for drinking a potion / being healed. */
+  heal() {
+    this.tone(520, 0.16, "sine", 0.22, 780);
+    this.tone(780, 0.2, "sine", 0.16, 1040, 0.08);
+  }
+
+  /** Dull low thunk for a denied action (not enough stamina). */
+  deny() {
+    this.tone(140, 0.09, "square", 0.16, 100);
+  }
+
   death() {
     this.tone(320, 0.7, "sawtooth", 0.3, 70);
     this.tone(160, 0.9, "square", 0.25, 50, 0.12);

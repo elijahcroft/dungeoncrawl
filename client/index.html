@@ -69,7 +69,7 @@
         border-color: #7aa7df;
         box-shadow: 0 0 0 3px rgba(122,167,223,0.15);
       }
-      #color-swatches { display: flex; gap: 8px; margin-top: 4px; }
+      #color-swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
       .swatch {
         width: 30px;
         height: 30px;
@@ -92,6 +92,13 @@
         box-shadow: 0 10px 24px rgba(240,193,95,0.18);
       }
       #join-form button:hover { background: #ffd47a; }
+      #join-form #join-controls {
+        margin: 16px 0 0;
+        text-align: center;
+        font-size: 11px;
+        color: #6f7889;
+        letter-spacing: 0.4px;
+      }
 
       #admin-overlay {
         background: #101217;
@@ -319,13 +326,20 @@
         <label for="join-name">Name</label>
         <input id="join-name" type="text" maxlength="16" placeholder="Player" />
 
-        <label>Color</label>
+        <label>Color <span style="opacity:0.6">(random armor rolled — pick to override)</span></label>
         <div id="color-swatches">
-          <div class="swatch selected" data-color="0x4da6ff" style="background:#4da6ff"></div>
-          <div class="swatch" data-color="0xff6b6b" style="background:#ff6b6b"></div>
-          <div class="swatch" data-color="0x6bff8f" style="background:#6bff8f"></div>
-          <div class="swatch" data-color="0xffd166" style="background:#ffd166"></div>
-          <div class="swatch" data-color="0xc06bff" style="background:#c06bff"></div>
+          <div class="swatch" data-color="0x4da6ff" style="background:#4da6ff"></div>
+          <div class="swatch" data-color="0xd6533a" style="background:#d6533a"></div>
+          <div class="swatch" data-color="0x3fa66a" style="background:#3fa66a"></div>
+          <div class="swatch" data-color="0x8a5cd6" style="background:#8a5cd6"></div>
+          <div class="swatch" data-color="0xc9702e" style="background:#c9702e"></div>
+          <div class="swatch" data-color="0x2c8fb0" style="background:#2c8fb0"></div>
+          <div class="swatch" data-color="0xb0324f" style="background:#b0324f"></div>
+          <div class="swatch" data-color="0x5b6472" style="background:#5b6472"></div>
+          <div class="swatch" data-color="0x6b8f2e" style="background:#6b8f2e"></div>
+          <div class="swatch" data-color="0xd98cae" style="background:#d98cae"></div>
+          <div class="swatch" data-color="0x2f4a8c" style="background:#2f4a8c"></div>
+          <div class="swatch" data-color="0x3a3f4a" style="background:#3a3f4a"></div>
         </div>
 
         <label for="join-class">Class</label>
@@ -335,6 +349,7 @@
         </select>
 
         <button type="submit">Enter</button>
+        <p id="join-controls">WASD move · SPACE dodge · J attack · E potion · M mute</p>
       </form>
     </div>
     <div id="admin-overlay" hidden>

@@ -15,6 +15,7 @@ import bossArtData from "../../../data/boss-art.json";
 import { preloadBossArt, ensureWeaponPickupTexture, ensureFloorTexture } from "../gfx/sprites";
 import { WEAPONS, type WeaponDef } from "../entities/weapons";
 import type { BossAttackDef } from "../../../shared/boss";
+import { classDef } from "../../../shared/classes";
 
 const bossDefs = bossesData as Record<string, BossDef>;
 const enemyDefs = enemiesData as Record<string, BossDef>;
@@ -34,6 +35,7 @@ interface DungeonRoomDef {
   exit: { x: number; y: number; w: number; h: number } | null;
   walls: RoomWallDef[];
   offset?: { x: number; y: number };
+  exits?: string[];
 }
 interface DungeonDef {
   id: string;
@@ -69,16 +71,11 @@ const WALL_STROKE = 0x44445a;
 const DOOR_COLOR = 0x6b4a2a; // closed doors read as a warm barrier; they vanish when the room is cleared
 const TORCH_COLOR = 0xffb454;
 
-const CLASS_STATS: Record<string, { hpMax: number; speedPct: number }> = {
-  warrior: { hpMax: 100, speedPct: 0 },
-  guardian: { hpMax: 130, speedPct: -15 },
-};
-
 const MOVE_SEND_INTERVAL_MS = 50;
 const HIT_STOP_MS = 70;
 const SHAKE_DURATION_MS = 80;
 const SHAKE_INTENSITY = 0.006;
-const DEFAULT_HINT = "WASD move · SPACE dodge roll (i-frames) · J attack";
+const DEFAULT_HINT = "WASD move · SPACE dodge roll (i-frames) · J attack · M mute";
 const OFFLINE_BOSS_ID = "sentinel";
 const MELEE_ENEMY_HURT_RADIUS = 18;
 const MELEE_BOSS_HURT_RADIUS = 36;
@@ -96,7 +93,9 @@ export class GameScene extends Phaser.Scene {
   private darkness!: Phaser.GameObjects.Rectangle;
   private minimap!: Phaser.GameObjects.Graphics;
   private deathText!: Phaser.GameObjects.Text;
+  private muteText!: Phaser.GameObjects.Text;
   private wasPlayerAlive = true;
+  private offlineBossWasAlive = true;
   private lastRunPhase = "playing";
   private hurtFlashing = false;
 
@@ -120,7 +119,9 @@ export class GameScene extends Phaser.Scene {
   private roomOrigins: { x: number; y: number }[] = [];
   private roomObjects: AlphaObject[][] = []; // per-room floor + walls, for dimming
   private corridorObjects: AlphaObject[] = []; // corridor floor strips, for dimming
-  private doors: { index: number; body: Phaser.GameObjects.Rectangle }[] = [];
+  private doors: { index: number; body: Phaser.GameObjects.Rectangle }[] = []; // `index` is the from-room
+  private dungeonEdges: { from: number; to: number }[] = []; // room graph, for the minimap
+  private clearedRooms = new Set<number>(); // rooms whose exits have opened this run
   private seenRoomKey = "";
   private lastRoomIntroKey = "";
   private lastTeleportId = -1;
@@ -151,11 +152,16 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(-10);
 
-    const classStats = CLASS_STATS[joinOptions.className] ?? CLASS_STATS.warrior;
+    const cls = classDef(joinOptions.className);
     this.player = new Player(this, 260, 460, {
       color: Number(joinOptions.color),
-      hpMax: classStats.hpMax,
-      speedPct: classStats.speedPct,
+      trimColor: Number(joinOptions.trimColor),
+      cape: joinOptions.cape,
+      hpMax: cls.hpMax,
+      speedPct: cls.speedPct,
+      staminaMax: cls.staminaMax,
+      damageMult: cls.damageMult,
+      weaponId: cls.starterWeaponId,
     });
 
     this.player.onAttack = (x, y, dx, dy) => this.handlePlayerAttack(x, y, dx, dy);
@@ -166,6 +172,14 @@ export class GameScene extends Phaser.Scene {
       this.spawnRollTrail();
     };
     this.player.onHurt = () => this.handlePlayerHurt();
+    this.player.onDenied = () => {
+      sfx.deny();
+      this.hud.flashStamina();
+    };
+    this.player.onHeal = () => {
+      sfx.heal();
+      this.spawnHealSparkle(this.player.sprite.x, this.player.sprite.y);
+    };
     this.player.onUseItem = () => {
       if (this.network.connected) this.network.sendUsePotion();
     };
@@ -196,8 +210,9 @@ export class GameScene extends Phaser.Scene {
       .setDepth(102)
       .setScrollFactor(0);
 
+    // y=630 keeps the hint clear of the boss bar (frame spans ~583–609).
     this.hint = this.add
-      .text(480, 612, DEFAULT_HINT, {
+      .text(480, 630, DEFAULT_HINT, {
         fontSize: "13px",
         color: "#d8d1bd",
         stroke: "#08080b",
@@ -240,6 +255,19 @@ export class GameScene extends Phaser.Scene {
     // Web Audio starts suspended; resume it on the first key/pointer input.
     this.input.keyboard?.once("keydown", () => sfx.resume());
     this.input.once("pointerdown", () => sfx.resume());
+
+    this.muteText = this.add
+      .text(948, 26, "", { fontSize: "11px", color: "#c99a4a" })
+      .setOrigin(1, 0)
+      .setDepth(102)
+      .setScrollFactor(0);
+    this.input.keyboard?.on("keydown-M", () => {
+      sfx.enabled = !sfx.enabled;
+      this.muteText.setText(sfx.enabled ? "" : "SOUND OFF · M");
+    });
+
+    // Offline runs end in a retry prompt instead of a forced page refresh.
+    this.input.keyboard?.on("keydown-R", () => this.retryOffline());
 
     this.game.events.on("boss-telegraph", () => sfx.bossTelegraph());
 
@@ -451,6 +479,20 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: ghost, alpha: 0, duration: 240, onComplete: () => ghost.destroy() });
       });
     }
+  }
+
+  /** Green motes drifting upward off a healed player. */
+  private spawnHealSparkle(x: number, y: number) {
+    const emitter = this.add.particles(x, y, "particle", {
+      tint: 0x7dffa8,
+      speedY: { min: -90, max: -40 },
+      speedX: { min: -30, max: 30 },
+      lifespan: 500,
+      scale: { start: 1.2, end: 0 },
+      emitting: false,
+    });
+    emitter.explode(12);
+    this.time.delayedCall(550, () => emitter.destroy());
   }
 
   /** Player took a hit: red flash + edge-vignette pulse + knockback away from the nearest enemy. */
@@ -1060,6 +1102,20 @@ export class GameScene extends Phaser.Scene {
     return side === "N" ? "S" : side === "S" ? "N" : side === "E" ? "W" : "E";
   }
 
+  /**
+   * The rooms `index` connects to, as indices — mirrors the server. Defaults to
+   * the linear next room (i+1) when `exits` is omitted; an explicit `exits` list
+   * (by room id) forks the path.
+   */
+  private exitIndices(dungeonDef: DungeonDef, index: number): number[] {
+    const room = dungeonDef.rooms[index];
+    if (!room) return [];
+    if (room.exits) {
+      return room.exits.map((id) => dungeonDef.rooms.findIndex((r) => r.id === id)).filter((j) => j >= 0 && j !== index);
+    }
+    return index + 1 < dungeonDef.rooms.length ? [index + 1] : [];
+  }
+
   /** Cardinal direction from room a to room b (they're one grid cell apart). */
   private dirBetween(a: { x: number; y: number }, b: { x: number; y: number }): Side {
     if (b.x > a.x) return "E";
@@ -1076,6 +1132,7 @@ export class GameScene extends Phaser.Scene {
    */
   private buildDungeonGeometry(dungeonDef: DungeonDef) {
     this.teardownDungeonGeometry();
+    this.clearedRooms.clear();
     this.screenFloor.setVisible(false);
 
     const floorKey = ensureFloorTexture(this);
@@ -1089,13 +1146,18 @@ export class GameScene extends Phaser.Scene {
       set.add(side);
       gaps.set(i, set);
     };
-    const connections: { i: number; dir: Side }[] = [];
-    for (let i = 0; i < dungeonDef.rooms.length - 1; i++) {
-      const dir = this.dirBetween(origins[i], origins[i + 1]);
-      connections.push({ i, dir });
-      addGap(i, dir);
-      addGap(i + 1, this.opposite(dir));
-    }
+    const connections: { from: number; to: number; dir: Side }[] = [];
+    dungeonDef.rooms.forEach((_room, i) => {
+      for (const j of this.exitIndices(dungeonDef, i)) {
+        // A corridor is shared by both endpoints; don't draw it twice if both list each other.
+        if (connections.some((c) => (c.from === i && c.to === j) || (c.from === j && c.to === i))) continue;
+        const dir = this.dirBetween(origins[i], origins[j]);
+        connections.push({ from: i, to: j, dir });
+        addGap(i, dir);
+        addGap(j, this.opposite(dir));
+      }
+    });
+    this.dungeonEdges = connections.map((c) => ({ from: c.from, to: c.to }));
 
     // Rooms: floor + interior walls + perimeter (with doorway gaps).
     dungeonDef.rooms.forEach((room, i) => {
@@ -1110,7 +1172,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Corridors + doors.
-    for (const { i, dir } of connections) this.buildCorridor(floorKey, origins[i], origins[i + 1], dir, i);
+    for (const { from, to, dir } of connections) this.buildCorridor(floorKey, origins[from], origins[to], dir, from);
 
     this.wallCollider = this.physics.add.collider(this.player.sprite, this.wallBodies);
 
@@ -1188,10 +1250,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Opens/closes door barriers: a door between room i and i+1 is open once room i is cleared. */
-  private updateDoors(currentIndex: number, currentCleared: boolean) {
+  /** Opens/closes door barriers: a door out of room i opens once room i has been cleared. */
+  private updateDoors(currentIndex: number) {
     for (const door of this.doors) {
-      const open = door.index < currentIndex || (door.index === currentIndex && currentCleared);
+      const open = this.clearedRooms.has(door.index);
       const body = door.body.body as Phaser.Physics.Arcade.StaticBody | undefined;
       if (body) body.enable = !open;
       if (open && door.body.visible && door.index === currentIndex) {
@@ -1230,7 +1292,7 @@ export class GameScene extends Phaser.Scene {
     this.corridorObjects.forEach((obj) => obj.setAlpha(INACTIVE_ROOM_ALPHA));
   }
 
-  private updateMinimap(dungeonDef: DungeonDef | undefined, currentIndex: number, exitOpen: boolean) {
+  private updateMinimap(dungeonDef: DungeonDef | undefined, currentIndex: number) {
     this.minimap.clear();
     if (!dungeonDef || this.roomOrigins.length === 0) return;
 
@@ -1255,9 +1317,9 @@ export class GameScene extends Phaser.Scene {
     const py = (worldY: number) => oy + (worldY - minY) * scale;
 
     this.minimap.lineStyle(3, 0x3b4658, 0.9);
-    for (let i = 0; i < this.roomOrigins.length - 1; i++) {
-      const a = this.roomOrigins[i];
-      const b = this.roomOrigins[i + 1];
+    for (const { from, to } of this.dungeonEdges) {
+      const a = this.roomOrigins[from];
+      const b = this.roomOrigins[to];
       this.minimap.lineBetween(px(a.x + ROOM_W / 2), py(a.y + ROOM_H / 2), px(b.x + ROOM_W / 2), py(b.y + ROOM_H / 2));
     }
 
@@ -1265,7 +1327,7 @@ export class GameScene extends Phaser.Scene {
       const rw = Math.max(14, ROOM_W * scale);
       const rh = Math.max(10, ROOM_H * scale);
       const active = i === currentIndex;
-      const cleared = i < currentIndex || (i === currentIndex && exitOpen);
+      const cleared = this.clearedRooms.has(i);
       const color = active ? 0xf3d27a : cleared ? 0x55ff88 : 0x6c7482;
       this.minimap.fillStyle(color, active ? 0.92 : 0.42);
       this.minimap.fillRoundedRect(px(o.x), py(o.y), rw, rh, 3);
@@ -1338,6 +1400,7 @@ export class GameScene extends Phaser.Scene {
     this.wallBodies.forEach((wall) => wall.destroy()); // corridor walls + doors (room walls already gone, destroy is a no-op)
     this.wallBodies = [];
     this.doors = [];
+    this.dungeonEdges = [];
     this.roomOrigins = [];
     this.minimap.clear();
     this.exitGraphic?.destroy();
@@ -1395,10 +1458,35 @@ export class GameScene extends Phaser.Scene {
     };
   }
 
+  private spawnOfflineBoss() {
+    this.offlineEnemy = new Enemy(this, 640, 320, bossDefs[OFFLINE_BOSS_ID], { id: "offline_boss", isBoss: true }, true);
+    this.offlineEnemy.onBossAttack = (x, y, range, attack) => this.handleBossAttack(x, y, range, attack);
+    this.offlineEnemy.onPhaseChange = (x, y) => this.handleBossPhaseChange(x, y);
+    this.offlineEnemy.onBlink = (fx, fy, tx, ty) => this.handleBossBlink(fx, fy, tx, ty);
+    this.offlineBossWasAlive = true;
+  }
+
+  /** Offline rematch (R): once the duel is decided, reset the hero and respawn the boss in place. */
+  private retryOffline() {
+    if (this.network.connected || !this.offlineEnemy) return;
+    if (this.player.isAlive && this.offlineEnemy.isAlive) return;
+    this.offlineEnemy.destroy();
+    this.syncProjectiles([]);
+    this.spawnOfflineBoss();
+    this.player.sprite.setPosition(260, 460);
+    this.player.syncHp(this.player.hpMax);
+    this.player.stamina = this.player.staminaMax;
+    this.hideDeathScreen();
+    this.wasPlayerAlive = true;
+    this.cameras.main.fadeIn(300, 0, 0, 0);
+  }
+
   private async connectToServer() {
     const room = await this.network.connect({
       name: joinOptions.name,
       color: joinOptions.color,
+      trimColor: joinOptions.trimColor,
+      cape: joinOptions.cape,
       className: joinOptions.className,
       role: this.spectator ? "spectator" : "player",
       adminPin: joinOptions.adminPin,
@@ -1406,10 +1494,7 @@ export class GameScene extends Phaser.Scene {
     if (!room) {
       this.statusText.setText(this.spectator ? "offline — nothing to spectate" : "offline — single-player only");
       if (this.spectator) return;
-      this.offlineEnemy = new Enemy(this, 640, 320, bossDefs[OFFLINE_BOSS_ID], { id: "offline_boss", isBoss: true }, true);
-      this.offlineEnemy.onBossAttack = (x, y, range, attack) => this.handleBossAttack(x, y, range, attack);
-      this.offlineEnemy.onPhaseChange = (x, y) => this.handleBossPhaseChange(x, y);
-      this.offlineEnemy.onBlink = (fx, fy, tx, ty) => this.handleBossBlink(fx, fy, tx, ty);
+      this.spawnOfflineBoss();
       return;
     }
 
@@ -1430,7 +1515,7 @@ export class GameScene extends Phaser.Scene {
     room.state.players.onAdd((state: RemotePlayerState, sessionId: string) => {
       updateStatusText();
       if (sessionId === room.sessionId) return;
-      const remote = new RemotePlayer(this, state.x, state.y, Number(state.color), state.name);
+      const remote = new RemotePlayer(this, state.x, state.y, Number(state.color), state.name, Number(state.trimColor), state.cape);
       this.remotePlayers.set(sessionId, remote);
     });
 
@@ -1499,6 +1584,7 @@ export class GameScene extends Phaser.Scene {
       this.player.update(time, delta);
     }
     this.hud.setStamina(this.player.stamina);
+    this.hud.update(delta);
     this.updateCooldownBar();
     this.updateAmbientDarkness();
 
@@ -1523,8 +1609,11 @@ export class GameScene extends Phaser.Scene {
         const introKey = `${state.dungeonId}:${state.roomIndex}:${state.roomName}`;
         if (roomKey !== this.seenRoomKey) {
           this.seenRoomKey = roomKey;
+          // A run restarts back at room 0 (not yet cleared) — forget the old cleared path.
+          if (state.roomIndex === 0 && !state.exitOpen) this.clearedRooms.clear();
+          if (state.exitOpen) this.clearedRooms.add(state.roomIndex);
           this.updateHighlight(state.roomIndex);
-          this.updateDoors(state.roomIndex, state.exitOpen);
+          this.updateDoors(state.roomIndex);
           const o = this.roomOrigins[state.roomIndex];
           if (this.spectator && o) this.cameras.main.pan(o.x + ROOM_W / 2, o.y + ROOM_H / 2, 600, "Sine.easeInOut");
         }
@@ -1532,7 +1621,7 @@ export class GameScene extends Phaser.Scene {
           this.lastRoomIntroKey = introKey;
           this.showRoomIntro(state);
         }
-        this.updateMinimap(dungeonDef, state.roomIndex, state.exitOpen);
+        this.updateMinimap(dungeonDef, state.roomIndex);
       } else {
         // Lobby / offline: single fixed room at the origin.
         const roomKey = `${state.dungeonId}:${state.roomId}:${state.roomRevision}`;
@@ -1540,7 +1629,7 @@ export class GameScene extends Phaser.Scene {
           this.seenRoomKey = roomKey;
           this.setActiveRoom(this.roomDefFromState(state));
         }
-        this.updateMinimap(undefined, 0, false);
+        this.updateMinimap(undefined, 0);
       }
 
       const localPlayer = state.players.get(room.sessionId);
@@ -1728,14 +1817,19 @@ export class GameScene extends Phaser.Scene {
 
       if (this.wasPlayerAlive && !this.player.isAlive) this.showDeathScreen();
       this.wasPlayerAlive = this.player.isAlive;
+      if (this.offlineBossWasAlive && !this.offlineEnemy.isAlive) {
+        this.offlineBossWasAlive = false;
+        sfx.victory();
+        this.showBanner("BOSS DEFEATED", "#e8d8b0");
+      }
       if (!this.hurtFlashing) this.vignette.setAlpha(this.lowHpVignetteAlpha());
 
       if (!this.player.isAlive) {
-        this.hint.setText("YOU DIED — refresh to retry");
-        this.objectiveText.setText("Defeat. Refresh to retry.");
+        this.hint.setText("YOU DIED — press R to retry");
+        this.objectiveText.setText("Defeat. Press R to retry.");
       } else if (!this.offlineEnemy.isAlive) {
-        this.hint.setText("BOSS DEFEATED — refresh to retry");
-        this.objectiveText.setText("Boss defeated.");
+        this.hint.setText("BOSS DEFEATED — press R for a rematch");
+        this.objectiveText.setText("Boss defeated. Press R for a rematch.");
       } else {
         this.hint.setText(DEFAULT_HINT);
         this.objectiveText.setText("Offline duel: defeat the Sentinel.");

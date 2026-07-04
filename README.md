@@ -99,7 +99,10 @@ See `soulslike-boss-game-plan.md` and `NEXT-STEPS.md` for the full plan and hist
 
 - `WASD` — move
 - `SPACE` — dodge roll (grants brief invulnerability, costs stamina)
-- `J` — melee attack (costs stamina)
+- `J` — attack with the equipped weapon (costs stamina)
+- `E` — drink a potion (picked up in dungeons)
+- `M` — mute/unmute sound
+- `R` — retry/rematch after an offline (single-player) duel ends
 
 On load you'll pick a name, color, and class before entering the shared lobby. The admin
 launches everyone into a dungeon. Clear each room to open its exit (it glows green) and walk

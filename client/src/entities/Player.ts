@@ -45,9 +45,17 @@ const IDLE_FRAME_INTERVAL_MS = 620;
 
 export interface PlayerOptions {
   color?: number;
+  trimColor?: number;
+  cape?: boolean;
   hpMax?: number;
   speedPct?: number;
   bonusDamage?: number;
+  /** Per-class stamina pool. Defaults to STAMINA_MAX. */
+  staminaMax?: number;
+  /** Per-class weapon-damage multiplier. Defaults to 1. */
+  damageMult?: number;
+  /** Weapon to spawn holding. Defaults to the starter sword. */
+  weaponId?: string;
 }
 
 export class Player {
@@ -63,6 +71,8 @@ export class Player {
   private aimDir = new Phaser.Math.Vector2(0, 1);
 
   private color: number;
+  private trimColor: number;
+  private cape: boolean;
   private moveSpeed: number;
   private bonusDamage: number;
   private currentWeapon: WeaponDef = WEAPONS[STARTER_WEAPON_ID];
@@ -110,10 +120,14 @@ export class Player {
   onRoll?: () => void;
   onHurt?: () => void;
   onUseItem?: () => void;
+  onDenied?: () => void;
+  onHeal?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PlayerOptions = {}) {
     this.scene = scene;
     this.color = options.color ?? 0x4da6ff;
+    this.trimColor = options.trimColor ?? 0xe2e8f2;
+    this.cape = options.cape ?? true;
     this.hpMax = options.hpMax ?? HP_MAX;
     this.hp = this.hpMax;
     this.moveSpeed = MOVE_SPEED * (1 + (options.speedPct ?? 0) / 100);
@@ -121,7 +135,7 @@ export class Player {
 
     this.shadow = scene.add.image(x, y + 26, ensureShadowTexture(scene, 30)).setDepth(-0.5);
 
-    const textureKey = ensurePlayerTexture(scene, this.color, "idle0", this.bakedWeaponSprite(), this.currentWeapon.color);
+    const textureKey = ensurePlayerTexture(scene, this.color, "idle0", this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape);
     const sprite = scene.add.sprite(x, y, textureKey) as Phaser.GameObjects.Sprite & {
       body: Phaser.Physics.Arcade.Body;
     };
@@ -185,7 +199,7 @@ export class Player {
     if (!next) return;
     this.currentWeapon = next;
     this.sprite.setTexture(
-      ensurePlayerTexture(this.scene, this.color, this.currentPose, this.bakedWeaponSprite(), next.color),
+      ensurePlayerTexture(this.scene, this.color, this.currentPose, this.bakedWeaponSprite(), next.color, this.trimColor, this.cape),
     );
     this.refreshWeaponOverlay();
   }
@@ -272,6 +286,7 @@ export class Player {
     const nextHp = Math.max(0, hp);
     const wasAlive = this.hp > 0;
     const tookDamage = nextHp < this.hp;
+    const healed = wasAlive && nextHp > this.hp + 0.5; // ignore sub-point regen jitter
     this.hp = nextHp;
     if (hpMax !== undefined) this.hpMax = hpMax;
 
@@ -285,6 +300,9 @@ export class Player {
       this.flashTint(0xff4d4d, 120);
       this.popScale(1.18, 0.84); // recoil squash on hit
       this.onHurt?.();
+    } else if (healed) {
+      this.flashTint(0x7dffa8, 160);
+      this.onHeal?.();
     }
   }
 
@@ -364,11 +382,10 @@ export class Player {
     this.updateSquash();
 
     // Roll input
-    if (
-      Phaser.Input.Keyboard.JustDown(this.keys.roll) &&
-      now >= this.rollCooldownUntil &&
-      this.stamina >= ROLL_STAMINA_COST
-    ) {
+    const rollPressed = Phaser.Input.Keyboard.JustDown(this.keys.roll) && now >= this.rollCooldownUntil;
+    if (rollPressed && this.stamina < ROLL_STAMINA_COST) {
+      this.onDenied?.();
+    } else if (rollPressed) {
       this.spendStamina(ROLL_STAMINA_COST);
       this.onRoll?.();
       this.isRolling = true;
@@ -383,11 +400,10 @@ export class Player {
     }
 
     // Attack input
-    if (
-      Phaser.Input.Keyboard.JustDown(this.keys.attack) &&
-      now >= this.attackCooldownUntil &&
-      this.stamina >= ATTACK_STAMINA_COST
-    ) {
+    const attackPressed = Phaser.Input.Keyboard.JustDown(this.keys.attack) && now >= this.attackCooldownUntil;
+    if (attackPressed && this.stamina < ATTACK_STAMINA_COST) {
+      this.onDenied?.();
+    } else if (attackPressed) {
       const w = this.currentWeapon;
       this.spendStamina(ATTACK_STAMINA_COST);
       this.aimAngle = Math.atan2(this.facing.y, this.facing.x);
@@ -421,7 +437,7 @@ export class Player {
     if (pose === this.currentPose) return;
     this.currentPose = pose;
     this.sprite.setTexture(
-      ensurePlayerTexture(this.scene, this.color, pose, this.bakedWeaponSprite(), this.currentWeapon.color),
+      ensurePlayerTexture(this.scene, this.color, pose, this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape),
     );
   }
 

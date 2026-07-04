@@ -48,7 +48,7 @@
         },
         "exit": {
           "x": 900,
-          "y": 240,
+          "y": 0,
           "w": 60,
           "h": 160
         },
@@ -3007,6 +3007,185 @@
           "h": 160
         },
         "walls": []
+      }
+    ]
+  },
+  "branching-trial": {
+    "id": "branching-trial",
+    "name": "The Branching Trial",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "The Fork",
+        "enemySpawns": [
+          {
+            "enemyId": "grunt",
+            "x": 520,
+            "y": 260
+          },
+          {
+            "enemyId": "grunt",
+            "x": 640,
+            "y": 400
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 420,
+            "y": 380
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 460,
+            "y": 120,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 460,
+            "y": 360,
+            "w": 40,
+            "h": 160
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 0
+        },
+        "exits": [
+          "r2",
+          "r3"
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "treasure",
+        "name": "The High Road",
+        "item": "swift_boots",
+        "itemSpawns": [
+          {
+            "itemId": "w_katana",
+            "x": 480,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 480,
+          "y": 560
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 300,
+            "y": 200,
+            "w": 60,
+            "h": 30
+          },
+          {
+            "x": 600,
+            "y": 200,
+            "w": 60,
+            "h": 30
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": -860
+        },
+        "exits": [
+          "r4"
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "arena",
+        "name": "The Low Road",
+        "enemySpawns": [
+          {
+            "enemyId": "brute",
+            "x": 560,
+            "y": 320
+          },
+          {
+            "enemyId": "archer",
+            "x": 720,
+            "y": 200
+          },
+          {
+            "enemyId": "archer",
+            "x": 720,
+            "y": 440
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "heavy_blade",
+            "x": 200,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 480,
+          "y": 40,
+          "w": 160,
+          "h": 60
+        },
+        "walls": [
+          {
+            "x": 400,
+            "y": 260,
+            "w": 160,
+            "h": 40
+          }
+        ],
+        "offset": {
+          "x": 1180,
+          "y": 0
+        },
+        "exits": [
+          "r4"
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "boss",
+        "name": "Where Paths Meet",
+        "boss": "gravelord",
+        "bossSpawn": {
+          "x": 640,
+          "y": 320
+        },
+        "entrance": {
+          "x": 480,
+          "y": 560
+        },
+        "exit": null,
+        "walls": [],
+        "offset": {
+          "x": 1180,
+          "y": -860
+        },
+        "exits": []
       }
     ]
   }

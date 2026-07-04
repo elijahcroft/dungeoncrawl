@@ -17,6 +17,8 @@ export class RemotePlayer {
   private shadow: Phaser.GameObjects.Image;
   private label: Phaser.GameObjects.Text;
   private color: number;
+  private trimColor: number;
+  private cape: boolean;
   private weapon: WeaponDef = WEAPONS[STARTER_WEAPON_ID];
   private targetX: number;
   private targetY: number;
@@ -26,12 +28,14 @@ export class RemotePlayer {
   private nextAnimAt = 0;
   private currentPose: PlayerPoseName = "idle0";
 
-  constructor(scene: Phaser.Scene, x: number, y: number, color: number, name: string) {
+  constructor(scene: Phaser.Scene, x: number, y: number, color: number, name: string, trimColor: number, cape: boolean) {
     this.targetX = x;
     this.targetY = y;
     this.color = color;
+    this.trimColor = trimColor;
+    this.cape = cape;
     this.shadow = scene.add.image(x, y + 26, ensureShadowTexture(scene, 30)).setDepth(-0.5);
-    const textureKey = ensurePlayerTexture(scene, color, "idle0", this.weapon.sprite, this.weapon.color);
+    const textureKey = ensurePlayerTexture(scene, color, "idle0", this.weapon.sprite, this.weapon.color, trimColor, cape);
     this.sprite = scene.add.sprite(x, y, textureKey);
     this.label = scene.add
       .text(x, y - 24, name, { fontSize: "11px", color: "#cccccc" })
@@ -85,7 +89,7 @@ export class RemotePlayer {
     if (pose === this.currentPose) return;
     this.currentPose = pose;
     this.sprite.setTexture(
-      ensurePlayerTexture(this.sprite.scene, this.color, pose, this.weapon.sprite, this.weapon.color),
+      ensurePlayerTexture(this.sprite.scene, this.color, pose, this.weapon.sprite, this.weapon.color, this.trimColor, this.cape),
     );
   }
 

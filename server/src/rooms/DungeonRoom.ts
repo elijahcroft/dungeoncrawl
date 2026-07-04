@@ -3,6 +3,7 @@ import * as path from "path";
 import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import { BossLogic, type BossDef, type BossTarget } from "../../../shared/boss";
+import { classDef } from "../../../shared/classes";
 
 // Resolved from the server package's cwd rather than __dirname so this works
 // whether running from source (tsx, src/rooms/) or the build output.
@@ -52,6 +53,13 @@ export interface DungeonRoomDef {
   walls: RoomWalls[];
   /** World-space placement of this room within the dungeon (client-only rendering). */
   offset?: { x: number; y: number };
+  /**
+   * Ids of the rooms this one connects to. Omit for the default linear chain
+   * (room i leads to room i+1). An explicit list forks the path: all its doors
+   * open on clear and the first one a player walks through commits the party.
+   * An empty list marks a leaf — clearing it ends the run.
+   */
+  exits?: string[];
 }
 
 export interface DungeonDef {
@@ -206,6 +214,7 @@ function validateRoomDef(input: unknown, label: string): DungeonRoomDef {
     exit: exitValue === null || exitValue === undefined ? null : parseRect(exitValue, `${label}.exit`),
     walls: wallsValue.map((wall, wallIndex) => parseRect(wall, `${label}.walls[${wallIndex}]`)),
     offset: optionalPoint(input, "offset", label),
+    exits: optionalStringArray(input, "exits", label),
   };
 }
 
@@ -280,6 +289,8 @@ export class PlayerState extends Schema {
   @type("number") hpMax = PLAYER_HP_MAX;
   @type("string") name = "Player";
   @type("string") color = "0x4da6ff";
+  @type("string") trimColor = "0xe2e8f2";
+  @type("boolean") cape = true;
   @type("string") className = "warrior";
   @type("number") bonusDamage = 0;
   @type("number") bonusSpeedPct = 0;
@@ -359,13 +370,10 @@ interface JoinOptions {
   adminPin?: string;
   name?: string;
   color?: string;
+  trimColor?: string;
+  cape?: boolean;
   className?: string;
 }
-
-const CLASS_STATS: Record<string, { hpMax: number; speedPct: number }> = {
-  warrior: { hpMax: PLAYER_HP_MAX, speedPct: 0 },
-  guardian: { hpMax: 130, speedPct: -15 },
-};
 
 export class DungeonRoom extends Room<DungeonRoomState> {
   maxClients = 64;
@@ -391,12 +399,14 @@ export class DungeonRoom extends Room<DungeonRoomState> {
 
     this.onMessage("move", (client, message: MoveMessage) => {
       const player = this.state.players.get(client.sessionId);
-      if (!player) return;
+      if (!player || !message) return;
+      // Reject malformed payloads — one bad message must not poison synced state.
+      if (![message.x, message.y, message.facingX, message.facingY].every(Number.isFinite)) return;
       player.x = message.x;
       player.y = message.y;
       player.facingX = message.facingX;
       player.facingY = message.facingY;
-      player.rolling = message.rolling;
+      player.rolling = message.rolling === true;
     });
 
     this.onMessage("enemy_hit", (client, message: { enemyId: string; damage: number }) => {
@@ -456,8 +466,8 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.onMessage("admin_next_room", (client) => {
       if (!this.requireAdmin(client)) return;
       if (!this.dungeonDef || this.state.runPhase !== "playing") return;
-      const nextIndex = this.state.roomIndex + 1;
-      if (nextIndex >= this.dungeonDef.rooms.length) {
+      const nextIndex = this.exitIndices(this.state.roomIndex)[0];
+      if (nextIndex === undefined) {
         this.triggerVictory("Admin ended the dungeon.");
       } else {
         this.announce("Admin moved everyone to the next room.");
@@ -502,11 +512,33 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       if (text) this.announce(text);
     });
 
-    this.setSimulationInterval((deltaMs) => this.tick(deltaMs), SIMULATION_INTERVAL_MS);
+    // A tick exception must not take the whole server (and everyone's session) down.
+    this.setSimulationInterval((deltaMs) => {
+      try {
+        this.tick(deltaMs);
+      } catch (err) {
+        console.error("[DungeonRoom] tick error:", err);
+      }
+    }, SIMULATION_INTERVAL_MS);
   }
 
   private currentRoomDef(): DungeonRoomDef | null {
     return this.dungeonDef?.rooms[this.state.roomIndex] ?? null;
+  }
+
+  /**
+   * The rooms `index` leads to, as indices. Defaults to the linear next room
+   * (i+1) when `exits` is omitted; an explicit `exits` list (by room id) forks
+   * the path, and an empty list marks a leaf (clearing it ends the run).
+   */
+  private exitIndices(index: number): number[] {
+    const rooms = this.dungeonDef?.rooms ?? [];
+    const room = rooms[index];
+    if (!room) return [];
+    if (room.exits) {
+      return room.exits.map((id) => rooms.findIndex((r) => r.id === id)).filter((j) => j >= 0 && j !== index);
+    }
+    return index + 1 < rooms.length ? [index + 1] : [];
   }
 
   /** World-space placement of a room within the dungeon (authored `offset`, or a horizontal fallback). */
@@ -643,7 +675,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.minionCounter = 0;
     this.respawnAt.clear();
 
-    if (roomDef.type === "boss" && roomDef.boss) {
+    if (roomDef.type === "boss" && roomDef.boss && bossDefs[roomDef.boss]) {
       const def = bossDefs[roomDef.boss];
       const spawn = roomDef.bossSpawn ?? { x: 640, y: 320 };
       const logic = new BossLogic(def, off.x + spawn.x, off.y + spawn.y);
@@ -708,11 +740,11 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       let i = 0;
       const entrance = this.worldEntrance(index);
       this.state.players.forEach((player) => {
-        const stats = CLASS_STATS[player.className] ?? CLASS_STATS.warrior;
-        player.hpMax = stats.hpMax;
+        const def = classDef(player.className);
+        player.hpMax = def.hpMax;
         player.bonusDamage = 0;
-        player.bonusSpeedPct = stats.speedPct;
-        player.weaponId = "sword";
+        player.bonusSpeedPct = def.speedPct;
+        player.weaponId = def.starterWeaponId;
         player.gold = 0;
         player.potionCharges = 0;
         player.hp = player.hpMax;
@@ -914,15 +946,22 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     // The last room clears into victory; otherwise the next room wakes up the
     // moment a living player physically walks into it — no teleport.
     if (this.state.exitOpen) {
-      const nextIndex = this.state.roomIndex + 1;
-      if (nextIndex >= this.dungeonDef.rooms.length) {
+      const nextIndices = this.exitIndices(this.state.roomIndex);
+      if (nextIndices.length === 0) {
         this.triggerVictory();
         return;
       }
-      const entered = [...this.state.players.entries()].some(
-        ([sessionId, player]) => player.hp > 0 && !this.disconnecting.has(sessionId) && this.insideRoom(nextIndex, player.x, player.y),
-      );
-      if (entered) this.activateRoom(nextIndex);
+      // Forked rooms open every door; the first one a living player walks
+      // through commits the whole party to that branch.
+      for (const nextIndex of nextIndices) {
+        const entered = [...this.state.players.entries()].some(
+          ([sessionId, player]) => player.hp > 0 && !this.disconnecting.has(sessionId) && this.insideRoom(nextIndex, player.x, player.y),
+        );
+        if (entered) {
+          this.activateRoom(nextIndex);
+          return;
+        }
+      }
       return;
     }
 
@@ -965,13 +1004,16 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     }
 
     const player = new PlayerState();
-    const stats = CLASS_STATS[options.className ?? "warrior"] ?? CLASS_STATS.warrior;
-    player.className = options.className ?? "warrior";
-    player.hpMax = stats.hpMax;
-    player.hp = stats.hpMax;
-    player.bonusSpeedPct = stats.speedPct;
+    const def = classDef(options.className);
+    player.className = def.id;
+    player.hpMax = def.hpMax;
+    player.hp = def.hpMax;
+    player.bonusSpeedPct = def.speedPct;
+    player.weaponId = def.starterWeaponId;
     player.name = (options.name ?? "Player").slice(0, 16);
     player.color = options.color ?? "0x4da6ff";
+    player.trimColor = options.trimColor ?? "0xe2e8f2";
+    player.cape = options.cape ?? true;
     const entrance = this.dungeonDef ? this.worldEntrance(this.state.roomIndex) : LOBBY_LAYOUT.entrance;
     const offset = this.state.players.size % 5;
     this.teleportPlayer(player, entrance.x, entrance.y + offset * 24 - 48);

@@ -32,6 +32,8 @@ interface DungeonRoomDef {
   entrance: { x: number; y: number };
   exit: RectDef | null;
   walls: RectDef[];
+  offset?: { x: number; y: number };
+  exits?: string[];
 }
 
 interface DungeonDef {
@@ -98,7 +100,8 @@ function hasSize(value: { x: number; y: number } | RectDef): value is RectDef {
 }
 
 function startGame() {
-  return new Phaser.Game({
+  // Exposed for debugging/automation (e.g. window.game.scene.keys.GameScene).
+  return ((window as unknown as { game?: Phaser.Game }).game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: "app",
     scale: {
@@ -116,7 +119,7 @@ function startGame() {
       },
     },
     scene: [GameScene],
-  });
+  }));
 }
 
 function setupPlayerJoin() {
@@ -132,8 +135,11 @@ function setupPlayerJoin() {
   adminOverlay.hidden = true;
   app.hidden = false;
 
-  let selectedColor = "0x4da6ff";
+  // joinOptions starts with a randomly-rolled armored look; highlight the swatch
+  // matching the rolled body color so the form reflects what the player will spawn as.
+  let selectedColor = joinOptions.color;
   swatches.forEach((swatch) => {
+    swatch.classList.toggle("selected", swatch.dataset.color === selectedColor);
     swatch.addEventListener("click", () => {
       swatches.forEach((s) => s.classList.remove("selected"));
       swatch.classList.add("selected");
@@ -144,7 +150,7 @@ function setupPlayerJoin() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     joinOptions.name = nameInput.value.trim() || "Player";
-    joinOptions.color = selectedColor;
+    joinOptions.color = selectedColor; // trim + cape keep their rolled values
     joinOptions.className = classSelect.value;
     overlay.remove();
     startGame();

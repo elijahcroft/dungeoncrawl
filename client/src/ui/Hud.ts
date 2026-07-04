@@ -7,8 +7,10 @@ import { Bar } from "./Bar";
  * ad-hoc bars scattered over the top-left corner.
  */
 export class Hud {
+  private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
   private hpBar: Bar;
+  private staminaFlashUntil = 0;
   private staminaBar: Bar;
   private cooldownBar: Bar;
   private cooldownLabel: Phaser.GameObjects.Text;
@@ -16,6 +18,7 @@ export class Hud {
   private potionText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, name: string) {
+    this.scene = scene;
     const panelX = 12;
     const panelY = 12;
     const panelW = 232;
@@ -38,7 +41,7 @@ export class Hud {
     this.container.add(nameText);
 
     this.container.add(scene.add.text(contentX, panelY + 30, "HP", { fontSize: "9px", color: "#8fd6a8" }).setOrigin(0, 0.5));
-    this.hpBar = new Bar(scene, barX, panelY + 30, barW, 14, 100, 0x4dff88);
+    this.hpBar = new Bar(scene, barX, panelY + 30, barW, 14, 100, 0x4dff88, true);
 
     this.container.add(scene.add.text(contentX, panelY + 50, "SP", { fontSize: "9px", color: "#e8d27a" }).setOrigin(0, 0.5));
     this.staminaBar = new Bar(scene, barX, panelY + 50, barW, 10, 100, 0xffdd44);
@@ -98,5 +101,20 @@ export class Hud {
 
   setPotions(charges: number) {
     this.potionText.setText(charges > 0 ? `Potions x${charges} [E]` : "");
+  }
+
+  /** Brief red flash on the stamina bar when an action is denied for lack of stamina. */
+  flashStamina() {
+    this.staminaFlashUntil = this.scene.time.now + 180;
+    this.staminaBar.setFillColor(0xff5544);
+  }
+
+  /** Per-frame: drains the HP chip trail and clears an expired stamina flash. */
+  update(delta: number) {
+    this.hpBar.update(delta);
+    if (this.staminaFlashUntil > 0 && this.scene.time.now >= this.staminaFlashUntil) {
+      this.staminaFlashUntil = 0;
+      this.staminaBar.setFillColor(0xffdd44);
+    }
   }
 }

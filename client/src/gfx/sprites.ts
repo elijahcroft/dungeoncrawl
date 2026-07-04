@@ -202,6 +202,8 @@ function drawPlayer(
   pose: Pose,
   weaponSprite: WeaponSprite,
   weaponColor: number,
+  trimColor: number,
+  cape: boolean,
 ) {
   const bodyColor = color;
   const legColor = darken(color, 60);
@@ -221,9 +223,11 @@ function drawPlayer(
   const torsoBottom = torsoTop + torsoH;
   const legLen = 11 - pose.crouch;
 
-  // cape (behind everything), sways opposite the lean
-  g.fillStyle(darken(bodyColor, 72), 1);
-  g.fillTriangle(cx - 7 - lean * 0.4, torsoTop + 1, cx + 7 - lean * 0.4, torsoTop + 1, cx - lean * 1.4, torsoBottom + 9 + pose.crouch);
+  // cape (behind everything), sways opposite the lean — not every hero wears one
+  if (cape) {
+    g.fillStyle(darken(bodyColor, 72), 1);
+    g.fillTriangle(cx - 7 - lean * 0.4, torsoTop + 1, cx + 7 - lean * 0.4, torsoTop + 1, cx - lean * 1.4, torsoBottom + 9 + pose.crouch);
+  }
 
   // legs + boots (outlined to match the torso/head silhouette)
   const legTopL = torsoBottom - 2 + pose.legL;
@@ -263,20 +267,23 @@ function drawPlayer(
   g.fillRoundedRect(tx + 2, torsoTop + 2, torsoW - 4, 6, 3); // top highlight
   g.fillStyle(lighten(bodyColor, 55), 0.5);
   g.fillRect(tx + torsoW - 3, torsoTop + 3, 1.5, torsoH - 8); // +x rim light
-  // chest emblem (diamond)
+  // chest emblem (diamond) — metal trim color for a two-tone armored look
   const ex = cx + lean * 0.4;
-  g.fillStyle(lighten(bodyColor, 55), 1);
+  g.fillStyle(trimColor, 1);
   g.fillTriangle(ex, torsoTop + 8, ex - 3, torsoTop + 12, ex + 3, torsoTop + 12);
   g.fillTriangle(ex - 3, torsoTop + 12, ex + 3, torsoTop + 12, ex, torsoTop + 16);
-  // belt + buckle
+  // belt + trim buckle
   g.fillStyle(darken(bodyColor, 50), 1);
   g.fillRect(tx, torsoBottom - 5, torsoW, 4);
-  g.fillStyle(0xc9a24b, 1);
+  g.fillStyle(trimColor, 1);
   g.fillRect(ex - 2, torsoBottom - 5, 4, 4);
-  // pauldrons
+  // pauldrons (body-toned dome with a trim stud)
   g.fillStyle(darken(bodyColor, 18), 1);
   g.fillCircle(tx + 3, torsoTop + 3, 4);
   g.fillCircle(tx + torsoW - 3, torsoTop + 3, 4);
+  g.fillStyle(trimColor, 1);
+  g.fillCircle(tx + 3, torsoTop + 3, 1.5);
+  g.fillCircle(tx + torsoW - 3, torsoTop + 3, 1.5);
 
   // front arm + hand (overlaps the grip)
   g.fillStyle(bodyColor, 1);
@@ -294,7 +301,7 @@ function drawPlayer(
   g.fillRoundedRect(hx - headR, headY - headR - 2, headR * 2, headR, 4); // helmet cap
   g.lineStyle(1.5, outlineColor, 1);
   g.strokeRoundedRect(hx - headR, headY - headR - 2, headR * 2, headR, 4); // helmet outline
-  g.fillStyle(lighten(bodyColor, 40), 1);
+  g.fillStyle(trimColor, 1);
   g.fillRect(hx - 1, headY - headR - 6, 2, 5); // crest
   g.fillStyle(0x111417, 1);
   g.fillRect(hx - headR + 2, headY - 1, headR * 2 - 4, 3); // visor slit
@@ -352,12 +359,14 @@ export function ensurePlayerTexture(
   poseName: PlayerPoseName = "idle0",
   weaponSprite: WeaponSprite = "sword",
   weaponColor = 0xcfd6e0,
+  trimColor = 0xe2e8f2,
+  cape = true,
 ): string {
-  const key = `char_p_${colorHex.toString(16)}_${poseName}_${weaponSprite}_${weaponColor.toString(16)}`;
+  const key = `char_p_${colorHex.toString(16)}_${poseName}_${weaponSprite}_${weaponColor.toString(16)}_${trimColor.toString(16)}_${cape ? 1 : 0}`;
   if (generatedKeys.has(key) || scene.textures.exists(key)) return key;
   generatedKeys.add(key);
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  drawPlayer(g, colorHex, POSES[poseName], weaponSprite, weaponColor);
+  drawPlayer(g, colorHex, POSES[poseName], weaponSprite, weaponColor, trimColor, cape);
   g.generateTexture(key, PLAYER_W, PLAYER_H);
   g.destroy();
   return key;

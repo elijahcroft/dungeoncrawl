@@ -15,6 +15,8 @@ export class PlayerState extends Schema {
   @type("number") hpMax = 100;
   @type("string") name = "Player";
   @type("string") color = "0x4da6ff";
+  @type("string") trimColor = "0xe2e8f2";
+  @type("boolean") cape = true;
   @type("string") className = "warrior";
   @type("number") bonusDamage = 0;
   @type("number") bonusSpeedPct = 0;

@@ -9,6 +9,8 @@ const RECONNECT_TOKEN_KEY = "boss_room_reconnect_token";
 export interface JoinOptions {
   name?: string;
   color?: string;
+  trimColor?: string;
+  cape?: boolean;
   className?: string;
   role?: "player" | "spectator";
   adminPin?: string;
