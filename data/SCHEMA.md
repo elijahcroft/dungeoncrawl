@@ -12,6 +12,8 @@ Everything here is plain JSON — add content by editing these files, no code ch
     "hpMax": 220,
     "aggroRange": 260,          // px — boss starts telegraphing once a player is this close
     "color": "0x8855cc",        // base tint, hex string
+    "goldReward": 90,           // optional — gold awarded to the killing player on death
+    "moveSpeed": 90,            // optional — px/sec; walks toward its target while idle and out of range (omit = stands still until aggroed)
     "attacks": {
       "<attackId>": {
         "telegraphMs": 650,     // wind-up before the hit lands
@@ -58,7 +60,7 @@ The newer mechanic fields also drive their own telegraphs and FX automatically: 
 
 ## enemies.json
 
-Same shape as one boss entry (`hpMax`, `aggroRange`, `color`, `attacks`, `phases`, `visual`) — these are cheaper, non-boss enemies spawned in `arena` rooms. They reuse the exact same state-machine engine as bosses.
+Same shape as one boss entry (`hpMax`, `aggroRange`, `color`, `attacks`, `phases`, `visual`, plus the optional `goldReward` and `moveSpeed`) — these are cheaper, non-boss enemies spawned in `arena` rooms. They reuse the exact same state-machine engine as bosses. `moveSpeed` is what makes a mob chase you instead of standing still until you wander into aggro range.
 
 ## Character visuals
 
@@ -117,9 +119,13 @@ If a boss id has no `boss-art.json` entry, it silently falls back to the `visual
         "boss": "sentinel",                 // boss only — boss id from bosses.json
         "bossSpawn": { "x": 640, "y": 320 },// boss only, optional (defaults to 640,320)
         "item": "iron_ring",                // treasure only — item id from items.json
+        "itemSpawns": [
+          { "itemId": "w_dagger", "x": 180, "y": 320 }
+        ],                                  // optional — extra floor pickups (any room), item ids from items.json
         "entrance": { "x": 80, "y": 320 },  // where players appear on entering this room
         "exit": { "x": 900, "y": 240, "w": 60, "h": 160 }, // walk-in zone to advance; null = last room
-        "walls": [{ "x": 460, "y": 260, "w": 40, "h": 120 }] // obstacle rectangles (client-side collision)
+        "walls": [{ "x": 460, "y": 260, "w": 40, "h": 120 }], // obstacle rectangles (client-side collision)
+        "offset": { "x": 0, "y": 0 }        // optional — client-only placement of this room for the seamless multi-room view; managed by the admin builder
       }
     ]
   }
@@ -158,7 +164,7 @@ currently edited dungeon, where it can be changed without altering the saved tem
 
 ## items.json
 
-Two item kinds share this file — a **stat** item and a **weapon** item:
+Three item kinds share this file — a **stat** item, a **weapon** item, and a **consumable**:
 ```
 {
   "<itemId>": {                       // stat item: grants a persistent bonus
@@ -173,10 +179,18 @@ Two item kinds share this file — a **stat** item and a **weapon** item:
     "name": "Display Name",
     "color": "0xaaaaaa",
     "weaponId": "sword"              // must match a key in client/src/entities/weapons.ts WEAPONS
+  },
+  "<consumableId>": {                  // consumable: grants a charge the player triggers with E
+    "id": "<consumableId>",
+    "name": "Display Name",
+    "color": "0xaaaaaa",
+    "itemType": "consumable",
+    "effect": "heal",                // only "heal" is implemented
+    "amount": 40                     // HP restored per use
   }
 }
 ```
-Items are placed by `dungeons.json` (`treasure` rooms' `item` field, or any room's `itemSpawns` list) and auto-picked-up on walkover. Stat effects stack and persist for the rest of the run; a weapon item replaces whatever weapon the player is carrying.
+Items are placed by `dungeons.json` (`treasure` rooms' `item` field, or any room's `itemSpawns` list) and auto-picked-up on walkover. Stat effects stack and persist for the rest of the run; a weapon item replaces whatever weapon the player is carrying; a consumable adds a healing charge (players carry up to 3) spent with the `E` key.
 
 Weapons themselves (damage, hitbox shape, reach, cooldown, combos) are defined in code, not data — see the `WEAPONS` table in `client/src/entities/weapons.ts`. Available weapon ids: `dagger`, `sword`, `spear`, `axe`, `mace`, `rapier`, `greatsword`, `warhammer`, `katana`, `crossbow`.
 

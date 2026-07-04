@@ -99,7 +99,8 @@ See `soulslike-boss-game-plan.md` and `NEXT-STEPS.md` for the full plan and hist
 
 - `WASD` — move
 - `SPACE` — dodge roll (grants brief invulnerability, costs stamina)
-- `J` — melee attack (costs stamina)
+- `J` — attack with your equipped weapon (costs stamina)
+- `E` — use a healing charge (picked up from consumable items; carry up to 3)
 
 On load you'll pick a name, color, and class before entering the shared lobby. The admin
 launches everyone into a dungeon. Clear each room to open its exit (it glows green) and walk
