@@ -190,5 +190,61 @@
       }
     },
     "phases": [{ "hpThreshold": 100, "attacks": ["hop"] }]
+  },
+  "frost_sprite": {
+    "id": "frost_sprite",
+    "name": "Frost Sprite",
+    "hpMax": 24,
+    "goldReward": 12,
+    "aggroRange": 380,
+    "moveSpeed": 100,
+    "color": "0x7cc5e8",
+    "visual": {
+      "bodyShape": "slim",
+      "size": 0.9,
+      "palette": { "body": "0x7cc5e8", "trim": "0x2a5a78", "eyes": "0xeaffff" },
+      "accessory": "horns",
+      "markings": "spots"
+    },
+    "attacks": {
+      "shard": {
+        "telegraphMs": 620,
+        "activeMs": 120,
+        "recoverMs": 440,
+        "cooldownMs": 1450,
+        "damage": 10,
+        "range": 360,
+        "animationKey": "cast",
+        "projectile": { "speed": 320, "radius": 8, "color": "0xbfeaff" }
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["shard"] }]
+  },
+  "rime_brute": {
+    "id": "rime_brute",
+    "name": "Rime Brute",
+    "hpMax": 80,
+    "goldReward": 38,
+    "aggroRange": 190,
+    "color": "0x5f8fae",
+    "visual": {
+      "bodyShape": "hulking",
+      "palette": { "body": "0x5f8fae", "trim": "0x2c4a5e", "eyes": "0x88ddff" },
+      "weapon": "club",
+      "accessory": "spikes",
+      "markings": "scars"
+    },
+    "attacks": {
+      "crush": {
+        "telegraphMs": 580,
+        "activeMs": 170,
+        "recoverMs": 520,
+        "cooldownMs": 1150,
+        "damage": 15,
+        "range": 68,
+        "animationKey": "swing"
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["crush"] }]
   }
 }
