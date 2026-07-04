@@ -36,6 +36,25 @@ npm run dev:server   # Colyseus server, ws://localhost:2567
 
 Open `http://localhost:5173` in your browser to play.
 
+## Classroom admin mode
+
+Students now join a shared lobby. They can choose name/color/class, but not the dungeon.
+Open `http://localhost:5173/admin` (or `?admin=1`) to connect as the admin and launch the
+whole lobby into a dungeon.
+
+The default admin PIN is `teacher`. Override it when starting the server:
+
+```
+ADMIN_PIN=your-pin npm run dev:server
+```
+
+Admin controls include dungeon launch, return to lobby, restart, next room, open exit,
+heal all, clear enemies, gather players at the entrance, and send a notice banner. The
+admin page also has a visual dungeon builder with a drag/drop room stage, room reordering,
+wall/entrance/exit/enemy/boss/item placement, reusable room templates saved in
+`data/rooms.json`, and a raw JSON fallback that saves complete dungeons to
+`data/dungeons.json`.
+
 ## Letting a second laptop join over wifi
 
 1. Make sure both laptops are on the same wifi network.
@@ -66,6 +85,9 @@ Colyseus server is up — the client falls back to single-player if it can't con
   (Warrior/Guardian, chosen on the join screen), character customization (name + color),
   and boss/enemy HP scaling by player count. The rest of the Phase 11 backlog (revive
   mechanic, spectator mode, persistent progression, etc.) is optional future work.
+- **Classroom admin mode (done):** Students land in one shared lobby while an admin launches
+  the active dungeon, edits dungeon JSON, and can operate the run live with reset/heal/advance
+  controls.
 - **Player sprites (done):** Procedurally-drawn 2-frame character sprites (head/body/legs,
   facing flip, walk animation) replace the original flat-color rectangles for players and
   enemies — see `client/src/gfx/sprites.ts`.
@@ -79,10 +101,11 @@ See `soulslike-boss-game-plan.md` and `NEXT-STEPS.md` for the full plan and hist
 - `SPACE` — dodge roll (grants brief invulnerability, costs stamina)
 - `J` — melee attack (costs stamina)
 
-On load you'll pick a name, color, class, and dungeon before entering. Clear each room to
-open its exit (it glows green) and walk through together to advance; wipe the party and the
-run resets to the dungeon's first room. Enemies telegraph (turn yellow) before they attack
-(turn red) — dodge through the attack or step out of range.
+On load you'll pick a name, color, and class before entering the shared lobby. The admin
+launches everyone into a dungeon. Clear each room to open its exit (it glows green) and walk
+through together to advance; wipe the party and the run resets to the dungeon's first room.
+Enemies telegraph (turn yellow) before they attack (turn red) — dodge through the attack or
+step out of range.
 
 ## How the networking works
 
@@ -110,3 +133,4 @@ in both tsconfigs — without it, TS's ES2022 class-field emit silently shadows 
 installed property accessors that `@colyseus/schema` needs for change-tracking, and state
 sync just quietly does nothing (no errors, values never update). Both tsconfigs already have
 this set; don't remove it.
+# dungeoncrawl
