@@ -25,8 +25,17 @@ const itemDefs = JSON.parse(fs.readFileSync(path.join(dataDir, "items.json"), "u
     /** When set, picking this up grants a consumable charge instead of an instant stat. */
     itemType?: "consumable";
     effect?: "heal";
+    /** Shop price in gold. Only needed for items offered in a rest-room shop. */
+    price?: number;
+    /** Visual tier: common | rare | epic. Drives name colour in shop/pickups. */
+    rarity?: string;
   }
 >;
+
+/** Every item with a price is fair game for a shop reroll. */
+const SHOPPABLE_ITEM_IDS = Object.values(itemDefs)
+  .filter((def) => typeof def.price === "number")
+  .map((def) => def.id);
 
 const MAX_POTION_CHARGES = 3;
 
@@ -46,6 +55,8 @@ export interface DungeonRoomDef {
   boss?: string;
   bossSpawn?: { x: number; y: number };
   item?: string;
+  /** Item ids offered for sale in this room's shop (rest rooms). */
+  shop?: string[];
   /** Extra floor pickups placed at fixed positions (used for weapon drops). */
   itemSpawns?: { itemId: string; x: number; y: number }[];
   entrance: { x: number; y: number };
@@ -209,6 +220,7 @@ function validateRoomDef(input: unknown, label: string): DungeonRoomDef {
     boss: typeof input.boss === "string" ? input.boss.trim() : undefined,
     bossSpawn: optionalPoint(input, "bossSpawn", label),
     item: typeof input.item === "string" ? input.item.trim() : undefined,
+    shop: optionalStringArray(input, "shop", label),
     itemSpawns: parseItemSpawns(input, label),
     entrance: requirePoint(input, "entrance", label),
     exit: exitValue === null || exitValue === undefined ? null : parseRect(exitValue, `${label}.exit`),
@@ -273,6 +285,18 @@ const PLAYER_HP_MAX = 100;
 const RESPAWN_DELAY_MS = 3000;
 const ROOM_RESET_DELAY_MS = 5000;
 const ITEM_PICKUP_RADIUS = 36;
+/** How many stat-accessory items a player can hold at once; a further pickup swaps the oldest. */
+const ACCESSORY_SLOTS = 2;
+/** A living ally within this range of a downed player fills their revive meter. */
+const REVIVE_RADIUS = 44;
+/** Time an ally must stand by a downed player to revive them. */
+const REVIVE_TIME_MS = 2500;
+/** Fraction of max HP a revived player comes back with. */
+const REVIVE_HP_FRAC = 0.5;
+/** Gold cost to reroll a shop's unsold offerings. */
+const SHOP_REROLL_COST = 15;
+/** One offering per stall is discounted to this fraction of its base price. */
+const SHOP_SALE_FRACTION = 0.7;
 const ENEMY_SPREAD_X = [560, 720, 640];
 const ENEMY_SPREAD_Y = [280, 280, 420];
 /** Ceiling on how many boss-summoned minions may be alive at once, so a summon attack can't snowball the arena. */
@@ -283,6 +307,20 @@ const MAX_SCALING_PLAYERS = 8;
 const HP_SCALE_PER_PLAYER = 0.35;
 /** Enemy damage bonus per extra player beyond the first (milder than HP). */
 const DAMAGE_SCALE_PER_PLAYER = 0.15;
+/** Emotes players can fire; the client sends an index into this list. */
+const EMOTES = ["😂", "❤️", "😱", "🐔"];
+/** Minimum gap between one player's emotes, so a held key can't flood the room. */
+const EMOTE_COOLDOWN_MS = 600;
+/** Chance an arena room spawns a fleeing Gold Gremlin alongside its enemies. */
+const GREMLIN_CHANCE = 0.2;
+const GREMLIN_ID = "gold_gremlin";
+/** Chance an arena room rolls a wacky mutator when it loads. */
+const ROOM_MUTATOR_CHANCE = 0.35;
+const ROOM_MUTATORS = [
+  { label: "💰 GREED — enemies drop DOUBLE GOLD!", goldScale: 2, hpScale: 1, damageScale: 1 },
+  { label: "🍬 GLASS BONES — enemies are brittle but bite HARD!", goldScale: 1, hpScale: 0.5, damageScale: 1.6 },
+  { label: "🗿 TITANS — beefy enemies, double gold!", goldScale: 2, hpScale: 1.8, damageScale: 1 },
+];
 
 export class PlayerState extends Schema {
   @type("number") x = 0;
@@ -306,6 +344,11 @@ export class PlayerState extends Schema {
   @type("number") lastHitSeq = 0;
   @type("number") gold = 0;
   @type("number") potionCharges = 0;
+  /** Equipped stat accessories (item ids); "" means an empty slot. Capped at ACCESSORY_SLOTS. */
+  @type("string") accessory0 = "";
+  @type("string") accessory1 = "";
+  /** 0..1 revive meter, filled while a living ally stands over this downed player. */
+  @type("number") reviveProgress = 0;
 }
 
 export class EnemyState extends Schema {
@@ -340,11 +383,23 @@ export class ItemPickupState extends Schema {
   @type("boolean") taken = false;
 }
 
+export class ShopOfferingState extends Schema {
+  @type("string") id = "";
+  @type("string") itemId = "";
+  @type("string") name = "";
+  @type("number") price = 0;
+  /** Undiscounted price; price < basePrice marks the stall's sale slot. */
+  @type("number") basePrice = 0;
+  @type("boolean") sold = false;
+  @type("string") rarity = "common";
+}
+
 export class DungeonRoomState extends Schema {
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: EnemyState }) enemies = new MapSchema<EnemyState>();
   @type({ map: ItemPickupState }) items = new MapSchema<ItemPickupState>();
   @type({ map: ProjectileState }) projectiles = new MapSchema<ProjectileState>();
+  @type({ map: ShopOfferingState }) shop = new MapSchema<ShopOfferingState>();
   @type("string") dungeonId = "";
   @type("string") dungeonName = "";
   @type("string") roomId = "";
@@ -394,6 +449,10 @@ export class DungeonRoom extends Room<DungeonRoomState> {
   private spectators = new Set<string>();
   /** Enemy damage multiplier fixed when the current room loads (see activateRoom). */
   private enemyDamageScale = 1;
+  /** Room-mutator multipliers, rolled per arena room in activateRoom. */
+  private mutatorGoldScale = 1;
+  private mutatorHpScale = 1;
+  private lastEmoteAt = new Map<string, number>();
 
   onAuth(_client: Client, options: JoinOptions) {
     const privileged = options.role === "admin" || options.role === "spectator";
@@ -424,8 +483,18 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       logic.takeDamage(message.damage);
       if (!logic.isAlive) {
         const attacker = this.state.players.get(client.sessionId);
-        if (attacker) attacker.gold += logic.def.goldReward ?? 0;
+        if (attacker) attacker.gold += Math.round((logic.def.goldReward ?? 0) * this.mutatorGoldScale);
       }
+    });
+
+    this.onMessage("emote", (client, message: { emote?: number }) => {
+      if (!this.state.players.has(client.sessionId)) return;
+      const index = typeof message?.emote === "number" ? Math.floor(message.emote) : -1;
+      if (index < 0 || index >= EMOTES.length) return;
+      const now = Date.now();
+      if (now - (this.lastEmoteAt.get(client.sessionId) ?? 0) < EMOTE_COOLDOWN_MS) return;
+      this.lastEmoteAt.set(client.sessionId, now);
+      this.broadcast("emote", { sessionId: client.sessionId, emote: EMOTES[index] });
     });
 
     this.onMessage("use_potion", (client) => {
@@ -435,6 +504,32 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       if (!def) return;
       player.potionCharges -= 1;
       player.hp = Math.min(player.hpMax, player.hp + (def.amount ?? 0));
+    });
+
+    this.onMessage("buy", (client, message: { id?: string }) => {
+      const player = this.state.players.get(client.sessionId);
+      const offer = message && typeof message.id === "string" ? this.state.shop.get(message.id) : undefined;
+      if (!player || player.hp <= 0 || !offer || offer.sold) return;
+      if (player.gold < offer.price) return;
+      const def = itemDefs[offer.itemId];
+      if (!def) return;
+      player.gold -= offer.price;
+      offer.sold = true;
+      this.applyItemToPlayer(player, def);
+    });
+
+    this.onMessage("reroll_shop", (client) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player || player.hp <= 0 || this.state.shop.size === 0) return;
+      if (player.gold < SHOP_REROLL_COST || SHOPPABLE_ITEM_IDS.length === 0) return;
+      player.gold -= SHOP_REROLL_COST;
+      // Reroll only unsold slots; already-bought items stay gone.
+      this.state.shop.forEach((offer) => {
+        if (offer.sold) return;
+        const itemId = SHOPPABLE_ITEM_IDS[Math.floor(Math.random() * SHOPPABLE_ITEM_IDS.length)];
+        this.fillOffering(offer, itemId);
+      });
+      this.markSaleOffering();
     });
 
     // PvP is only live while everyone is idling in the lobby, not mid-dungeon.
@@ -646,6 +741,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.state.enemies.clear();
     this.state.items.clear();
     this.state.projectiles.clear();
+    this.state.shop.clear();
     this.enemyLogics.clear();
     this.minionCounter = 0;
     this.respawnAt.clear();
@@ -660,7 +756,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
 
   private scaledHpMax(baseHpMax: number): number {
     // Difficulty scales gently with player count so a full party doesn't trivialize fights.
-    return Math.round(baseHpMax * (1 + HP_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1)));
+    return Math.round(baseHpMax * (1 + HP_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1)) * this.mutatorHpScale);
   }
 
   /**
@@ -683,11 +779,23 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     this.state.enemies.clear();
     this.state.items.clear();
     this.state.projectiles.clear();
+    this.state.shop.clear();
     this.enemyLogics.clear();
     this.minionCounter = 0;
     this.respawnAt.clear();
+    // Roll a wacky mutator for arena rooms before any scaling math uses it.
+    this.mutatorGoldScale = 1;
+    this.mutatorHpScale = 1;
+    let mutatorDamageScale = 1;
+    if (roomDef.type === "arena" && Math.random() < ROOM_MUTATOR_CHANCE) {
+      const mutator = ROOM_MUTATORS[Math.floor(Math.random() * ROOM_MUTATORS.length)];
+      this.mutatorGoldScale = mutator.goldScale;
+      this.mutatorHpScale = mutator.hpScale;
+      mutatorDamageScale = mutator.damageScale;
+      this.announce(mutator.label);
+    }
     // Fix the enemy damage multiplier for this room at load time so mid-fight joins/leaves don't shift it.
-    this.enemyDamageScale = 1 + DAMAGE_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1);
+    this.enemyDamageScale = (1 + DAMAGE_SCALE_PER_PLAYER * (this.scalingPlayerCount() - 1)) * mutatorDamageScale;
 
     if (roomDef.type === "boss" && roomDef.boss && bossDefs[roomDef.boss]) {
       const def = bossDefs[roomDef.boss];
@@ -728,6 +836,28 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         enemyState.isBoss = false;
         this.state.enemies.set(id, enemyState);
       });
+      // Wildcard: a Gold Gremlin sometimes scurries in. It flees instead of
+      // fighting and pays out big when caught — and the door stays shut until
+      // it's dealt with, so the party has to corner it.
+      if (enemyDefs[GREMLIN_ID] && Math.random() < GREMLIN_CHANCE) {
+        const def = enemyDefs[GREMLIN_ID];
+        const gx = off.x + 480 + (Math.random() * 240 - 120);
+        const gy = off.y + 320 + (Math.random() * 160 - 80);
+        const logic = new BossLogic(def, gx, gy);
+        const id = "gremlin";
+        this.enemyLogics.set(id, logic);
+        const enemyState = new EnemyState();
+        enemyState.id = id;
+        enemyState.defId = def.id;
+        enemyState.name = def.name;
+        enemyState.isBoss = false;
+        enemyState.x = gx;
+        enemyState.y = gy;
+        enemyState.hp = logic.hp;
+        enemyState.hpMax = logic.hpMax;
+        this.state.enemies.set(id, enemyState);
+        this.announce("💰 A Gold Gremlin scurries in — catch it!");
+      }
     } else if (roomDef.type === "treasure" && roomDef.item) {
       const item = new ItemPickupState();
       item.id = "pickup_0";
@@ -736,6 +866,16 @@ export class DungeonRoom extends Room<DungeonRoomState> {
       item.y = off.y + 320;
       this.state.items.set(item.id, item);
     }
+
+    // Shop offerings (rest rooms). Shared stock: once someone buys an offering it's gone.
+    roomDef.shop?.forEach((itemId, i) => {
+      if (!itemDefs[itemId]) return;
+      const offer = new ShopOfferingState();
+      offer.id = `shop_${i}`;
+      this.fillOffering(offer, itemId);
+      this.state.shop.set(offer.id, offer);
+    });
+    if (this.state.shop.size > 0) this.markSaleOffering();
 
     // Fixed-position floor pickups (weapons, extra loot) — usable in any room type.
     roomDef.itemSpawns?.forEach((spawn, i) => {
@@ -761,6 +901,9 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         player.weaponId = def.starterWeaponId;
         player.gold = 0;
         player.potionCharges = 0;
+        player.accessory0 = "";
+        player.accessory1 = "";
+        player.reviveProgress = 0;
         player.hp = player.hpMax;
         this.teleportPlayer(player, entrance.x, entrance.y + (i % 5) * 24 - 48);
         i += 1;
@@ -853,6 +996,67 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     }
   }
 
+  /** Point a shop offering at an item, copying its display fields. */
+  private fillOffering(offer: ShopOfferingState, itemId: string) {
+    const def = itemDefs[itemId];
+    offer.itemId = itemId;
+    offer.name = def.name;
+    offer.price = def.price ?? 0;
+    offer.basePrice = offer.price;
+    offer.rarity = def.rarity ?? "common";
+    offer.sold = false;
+  }
+
+  /** Discount one random unsold offering to the sale price; clears any previous sale first. */
+  private markSaleOffering() {
+    const unsold: ShopOfferingState[] = [];
+    this.state.shop.forEach((offer) => {
+      offer.price = offer.basePrice;
+      if (!offer.sold) unsold.push(offer);
+    });
+    if (unsold.length === 0) return;
+    const pick = unsold[Math.floor(Math.random() * unsold.length)];
+    pick.price = Math.max(1, Math.round(pick.basePrice * SHOP_SALE_FRACTION));
+  }
+
+  /** Grant an item's effect to a player. Shared by floor pickups and shop purchases. */
+  private applyItemToPlayer(player: PlayerState, def: (typeof itemDefs)[string]) {
+    if (def.itemType === "consumable") {
+      player.potionCharges = Math.min(MAX_POTION_CHARGES, player.potionCharges + 1);
+    } else if (def.weaponId) {
+      player.weaponId = def.weaponId;
+    } else if (def.stat) {
+      // Stat item = accessory. Fill an empty slot, or swap out the oldest (FIFO).
+      if (player.accessory0 === "") player.accessory0 = def.id;
+      else if (player.accessory1 === "") player.accessory1 = def.id;
+      else {
+        player.accessory0 = player.accessory1;
+        player.accessory1 = def.id;
+      }
+      this.recomputeStats(player);
+    }
+  }
+
+  /** Recompute HP/damage/speed from the class base plus currently equipped accessories. */
+  private recomputeStats(player: PlayerState) {
+    const cls = classDef(player.className);
+    let hpMax = cls.hpMax;
+    let bonusDamage = 0;
+    let bonusSpeedPct = cls.speedPct;
+    for (const id of [player.accessory0, player.accessory1]) {
+      if (!id) continue;
+      const d = itemDefs[id];
+      if (!d) continue;
+      if (d.stat === "hpMax") hpMax += d.amount ?? 0;
+      else if (d.stat === "damage") bonusDamage += d.amount ?? 0;
+      else if (d.stat === "speedPct") bonusSpeedPct += d.amount ?? 0;
+    }
+    player.hpMax = hpMax;
+    player.bonusDamage = bonusDamage;
+    player.bonusSpeedPct = bonusSpeedPct;
+    if (player.hp > hpMax) player.hp = hpMax;
+  }
+
   /** Downed players (from PvE or lobby PvP) respawn at `spawn` after a short delay. */
   private respawnDownedPlayers(now: number, spawn: { x: number; y: number }) {
     this.state.players.forEach((player, sessionId) => {
@@ -867,6 +1071,30 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         player.hp = player.hpMax;
         this.teleportPlayer(player, spawn.x, spawn.y);
         this.respawnAt.delete(sessionId);
+      }
+    });
+  }
+
+  /** Fill each downed player's revive meter while a living ally stands over them. */
+  private updateRevives(deltaMs: number) {
+    this.state.players.forEach((downed, id) => {
+      if (downed.hp > 0) {
+        downed.reviveProgress = 0;
+        return;
+      }
+      let ally = false;
+      this.state.players.forEach((other, otherId) => {
+        if (otherId === id || other.hp <= 0) return;
+        if (Math.hypot(other.x - downed.x, other.y - downed.y) <= REVIVE_RADIUS) ally = true;
+      });
+      if (ally) {
+        downed.reviveProgress = Math.min(1, downed.reviveProgress + deltaMs / REVIVE_TIME_MS);
+        if (downed.reviveProgress >= 1) {
+          downed.hp = Math.round(downed.hpMax * REVIVE_HP_FRAC);
+          downed.reviveProgress = 0;
+        }
+      } else {
+        downed.reviveProgress = Math.max(0, downed.reviveProgress - deltaMs / REVIVE_TIME_MS);
       }
     });
   }
@@ -895,7 +1123,9 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     const roomDef = this.currentRoomDef();
     if (!roomDef || !this.dungeonDef) return;
 
-    this.respawnDownedPlayers(now, this.worldEntrance(this.state.roomIndex));
+    // In a live dungeon, downed players stay down and are revived by a nearby
+    // ally instead of auto-respawning. A full party-down still triggers a wipe.
+    this.updateRevives(deltaMs);
 
     // Item pickups (proximity auto-pickup).
     this.state.items.forEach((item) => {
@@ -907,18 +1137,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
         const def = itemDefs[item.itemId];
         if (!def) return;
         item.taken = true;
-        if (def.itemType === "consumable") {
-          player.potionCharges = Math.min(MAX_POTION_CHARGES, player.potionCharges + 1);
-        } else if (def.weaponId) {
-          player.weaponId = def.weaponId;
-        } else if (def.stat === "hpMax") {
-          player.hpMax += def.amount ?? 0;
-          player.hp += def.amount ?? 0;
-        } else if (def.stat === "speedPct") {
-          player.bonusSpeedPct += def.amount ?? 0;
-        } else if (def.stat === "damage") {
-          player.bonusDamage += def.amount ?? 0;
-        }
+        this.applyItemToPlayer(player, def);
       });
     });
 
@@ -1045,6 +1264,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     if (consented) {
       this.state.players.delete(client.sessionId);
       this.respawnAt.delete(client.sessionId);
+      this.lastEmoteAt.delete(client.sessionId);
       return;
     }
     this.disconnecting.add(client.sessionId);
@@ -1053,6 +1273,7 @@ export class DungeonRoom extends Room<DungeonRoomState> {
     } catch {
       this.state.players.delete(client.sessionId);
       this.respawnAt.delete(client.sessionId);
+      this.lastEmoteAt.delete(client.sessionId);
     } finally {
       this.disconnecting.delete(client.sessionId);
     }

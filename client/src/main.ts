@@ -123,6 +123,34 @@ function startGame() {
   }));
 }
 
+// Remembers the student's chosen identity for the browser tab session so a page
+// reload skips the join form and reconnects straight into their character.
+const PROFILE_KEY = "dungeon_player_profile";
+
+function saveProfile() {
+  sessionStorage.setItem(
+    PROFILE_KEY,
+    JSON.stringify({
+      name: joinOptions.name,
+      color: joinOptions.color,
+      trimColor: joinOptions.trimColor,
+      cape: joinOptions.cape,
+      className: joinOptions.className,
+    }),
+  );
+}
+
+function restoreProfile(): boolean {
+  const raw = sessionStorage.getItem(PROFILE_KEY);
+  if (!raw) return false;
+  try {
+    Object.assign(joinOptions, JSON.parse(raw));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function setupPlayerJoin() {
   const overlay = document.getElementById("join-overlay")!;
   const adminOverlay = document.getElementById("admin-overlay")!;
@@ -160,6 +188,7 @@ function setupPlayerJoin() {
     joinOptions.name = nameInput.value.trim() || "Player";
     joinOptions.color = selectedColor; // trim + cape keep their rolled values
     joinOptions.className = classSelect.value;
+    saveProfile();
     overlay.remove();
     startGame();
   });
@@ -1037,6 +1066,12 @@ const adminMode = params.has("admin") || window.location.pathname.replace(/\/$/,
 
 if (adminMode) {
   setupAdmin();
+} else if (restoreProfile()) {
+  // Returning player in the same tab session: skip the form and reconnect
+  // (Network.connect resumes via the stored token, or rejoins with this identity).
+  document.getElementById("join-overlay")!.remove();
+  document.getElementById("app")!.hidden = false;
+  startGame();
 } else {
   setupPlayerJoin();
 }

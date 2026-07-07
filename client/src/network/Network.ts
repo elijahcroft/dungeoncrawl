@@ -81,4 +81,16 @@ export class Network {
   sendUsePotion() {
     this.room?.send("use_potion");
   }
+
+  sendBuy(id: string) {
+    this.room?.send("buy", { id });
+  }
+
+  sendReroll() {
+    this.room?.send("reroll_shop");
+  }
+
+  sendEmote(emote: number) {
+    this.room?.send("emote", { emote });
+  }
 }

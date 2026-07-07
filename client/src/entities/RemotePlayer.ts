@@ -16,6 +16,7 @@ export class RemotePlayer {
   sprite: Phaser.GameObjects.Sprite;
   private shadow: Phaser.GameObjects.Image;
   private label: Phaser.GameObjects.Text;
+  private reviveText: Phaser.GameObjects.Text;
   private color: number;
   private trimColor: number;
   private cape: boolean;
@@ -40,9 +41,19 @@ export class RemotePlayer {
     this.label = scene.add
       .text(x, y - 24, name, { fontSize: "11px", color: "#cccccc" })
       .setOrigin(0.5, 1);
+    this.reviveText = scene.add
+      .text(x, y - 38, "", { fontSize: "10px", color: "#6bff9a", fontStyle: "bold" })
+      .setOrigin(0.5, 1)
+      .setDepth(50);
   }
 
-  setTarget(x: number, y: number, rolling: boolean, hp: number, facingX: number, weaponId: string) {
+  setTarget(x: number, y: number, rolling: boolean, hp: number, facingX: number, weaponId: string, reviveProgress = 0) {
+    if (hp <= 0) {
+      const pct = Math.round(reviveProgress * 100);
+      this.reviveText.setText(pct > 0 ? `REVIVING ${pct}%` : "REVIVE ME");
+    } else {
+      this.reviveText.setText("");
+    }
     this.targetX = x;
     this.targetY = y;
     this.rolling = rolling;
@@ -69,6 +80,7 @@ export class RemotePlayer {
     this.sprite.y = Phaser.Math.Linear(this.sprite.y, this.targetY, LERP_FACTOR);
     this.shadow.setPosition(this.sprite.x, this.sprite.y + 26);
     this.label.setPosition(this.sprite.x, this.sprite.y - 24);
+    this.reviveText.setPosition(this.sprite.x, this.sprite.y - 38);
   }
 
   private updateAnimation(now: number, moving: boolean) {
@@ -97,5 +109,6 @@ export class RemotePlayer {
     this.sprite.destroy();
     this.shadow.destroy();
     this.label.destroy();
+    this.reviveText.destroy();
   }
 }

@@ -4,6 +4,7 @@ import { Enemy, type BossDef } from "../entities/Enemy";
 import { RemotePlayer } from "../entities/RemotePlayer";
 import { BossBar } from "../ui/BossBar";
 import { Hud } from "../ui/Hud";
+import { ShopPanel, type ShopOffering } from "../ui/ShopPanel";
 import { showDamageText } from "../ui/DamageText";
 import { PauseMenu } from "../ui/PauseMenu";
 import { sfx } from "../audio/sfx";
@@ -78,7 +79,7 @@ const MOVE_SEND_INTERVAL_MS = 50;
 const HIT_STOP_MS = 70;
 const SHAKE_DURATION_MS = 80;
 const SHAKE_INTENSITY = 0.006;
-const DEFAULT_HINT = "WASD move · SPACE dodge roll (i-frames) · J attack · M mute";
+const DEFAULT_HINT = "WASD move · SPACE dodge roll (i-frames) · J attack · M mute · T/Y/U/G emotes 😂❤️😱🐔";
 const OFFLINE_BOSS_ID = "sentinel";
 const MELEE_ENEMY_HURT_RADIUS = 18;
 const MELEE_BOSS_HURT_RADIUS = 36;
@@ -87,6 +88,8 @@ const MELEE_PLAYER_HURT_RADIUS = 16;
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private hud!: Hud;
+  private shopPanel!: ShopPanel;
+  private shopOfferings: ShopOffering[] = [];
   private pauseMenu!: PauseMenu;
   private hint!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
@@ -191,6 +194,7 @@ export class GameScene extends Phaser.Scene {
 
     this.hud = new Hud(this, joinOptions.name);
     this.hud.setHpMax(this.player.hpMax);
+    this.shopPanel = new ShopPanel(this);
 
     this.roomText = this.add
       .text(480, 8, "", {
@@ -277,8 +281,21 @@ export class GameScene extends Phaser.Scene {
       this.muteText.setText(muted ? "SOUND OFF · M" : "");
     });
 
-    // Offline runs end in a retry prompt instead of a forced page refresh.
-    this.input.keyboard?.on("keydown-R", () => this.retryOffline());
+    // R rerolls the shop when a stall is open; otherwise it's the offline retry key.
+    this.input.keyboard?.on("keydown-R", () => {
+      if (this.shopOfferings.length > 0 && this.network.connected) this.network.sendReroll();
+      else this.retryOffline();
+    });
+
+    // Number keys 1-5 buy the matching shop offering while a stall is visible.
+    (["ONE", "TWO", "THREE", "FOUR", "FIVE"] as const).forEach((key, i) => {
+      this.input.keyboard?.on(`keydown-${key}`, () => this.buyShopOffering(i));
+    });
+
+    // T/Y/U/G fire emotes everyone in the room can see (indices into the server's emote list).
+    (["T", "Y", "U", "G"] as const).forEach((key, i) => {
+      this.input.keyboard?.on(`keydown-${key}`, () => this.network.sendEmote(i));
+    });
 
     this.game.events.on("boss-telegraph", () => sfx.bossTelegraph());
 
@@ -693,8 +710,9 @@ export class GameScene extends Phaser.Scene {
     this.bossBar.update();
   }
 
-  private showDeathScreen() {
+  private showDeathScreen(label = "YOU DIED") {
     sfx.death();
+    this.deathText.setText(label);
     this.deathText.setAlpha(0).setScale(1.4);
     this.tweens.add({ targets: this.deathText, alpha: 1, scale: 1, duration: 700, ease: "Cubic.easeOut" });
     this.cameras.main.shake(400, 0.008);
@@ -705,6 +723,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** One-shot centered banner (dungeon cleared / team wiped) that fades in then drifts away. */
+  /** Pop an emote bubble above the emoting player's head; it drifts up and fades out. */
+  private showEmote(sessionId: string, emote: string) {
+    const isLocal = sessionId === this.network.room?.sessionId;
+    const source = isLocal ? this.player.sprite : this.remotePlayers.get(sessionId)?.sprite;
+    if (!source) return;
+    const text = this.add.text(source.x, source.y - 34, emote, { fontSize: "22px" }).setOrigin(0.5, 1).setDepth(60);
+    this.tweens.add({
+      targets: text,
+      y: source.y - 74,
+      alpha: 0,
+      scale: 1.5,
+      duration: 1200,
+      ease: "Cubic.easeOut",
+      onComplete: () => text.destroy(),
+    });
+  }
+
   private showBanner(message: string, color: string) {
     const banner = this.add
       .text(480, 260, message, { fontSize: "44px", color, fontStyle: "bold" })
@@ -1343,6 +1378,23 @@ export class GameScene extends Phaser.Scene {
     this.minimap.fillCircle(px(p.x), py(p.y), 3.5);
   }
 
+  private syncShop(state: DungeonRoomState, gold: number) {
+    const offerings: ShopOffering[] = [];
+    state.shop.forEach((o) =>
+      offerings.push({ id: o.id, itemId: o.itemId, name: o.name, price: o.price, basePrice: o.basePrice, sold: o.sold, rarity: o.rarity }),
+    );
+    offerings.sort((a, b) => a.id.localeCompare(b.id));
+    this.shopOfferings = offerings;
+    this.shopPanel.setVisible(offerings.length > 0);
+    if (offerings.length > 0) this.shopPanel.update(offerings, gold);
+  }
+
+  private buyShopOffering(index: number) {
+    const offer = this.shopOfferings[index];
+    if (!offer || offer.sold || !this.network.connected) return;
+    this.network.sendBuy(offer.id);
+  }
+
   private objectiveForState(state: DungeonRoomState) {
     if (state.runPhase === "lobby") return "Choose your class, spar if you want, and wait for launch.";
     if (state.runPhase === "victory") return "Run complete.";
@@ -1501,6 +1553,10 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    room.onMessage("emote", (message: { sessionId: string; emote: string }) => {
+      this.showEmote(message.sessionId, message.emote);
+    });
+
     const spawn = room.state.players.get(room.sessionId);
     if (spawn) {
       this.player.sprite.setPosition(spawn.x, spawn.y);
@@ -1652,6 +1708,11 @@ export class GameScene extends Phaser.Scene {
         this.hud.setGold(localPlayer.gold);
         this.hud.setPotions(localPlayer.potionCharges);
         this.hud.setHpMax(localPlayer.hpMax);
+        this.syncShop(state, localPlayer.gold);
+        const accNames = [localPlayer.accessory0, localPlayer.accessory1]
+          .filter(Boolean)
+          .map((id) => itemDefs[id]?.name ?? id);
+        this.hud.setAccessories(accNames);
         if (!wasAlive && this.player.isAlive) {
           this.player.sprite.setPosition(localPlayer.x, localPlayer.y);
         }
@@ -1740,6 +1801,7 @@ export class GameScene extends Phaser.Scene {
           remoteState.hp,
           remoteState.facingX,
           remoteState.weaponId,
+          remoteState.reviveProgress,
         );
         remote.update();
       }
@@ -1759,8 +1821,8 @@ export class GameScene extends Phaser.Scene {
         if (state.adminNotice) this.showBanner(state.adminNotice, "#d8e8ff");
       }
 
-      // "YOU DIED" on downing, cleared on respawn.
-      if (this.wasPlayerAlive && !this.player.isAlive) this.showDeathScreen();
+      // "DOWNED" on going down (a teammate can revive you), cleared on revive/respawn.
+      if (this.wasPlayerAlive && !this.player.isAlive) this.showDeathScreen("DOWNED");
       else if (!this.wasPlayerAlive && this.player.isAlive) this.hideDeathScreen();
       this.wasPlayerAlive = this.player.isAlive;
 
@@ -1794,7 +1856,12 @@ export class GameScene extends Phaser.Scene {
         const secondsLeft = Math.max(0, Math.ceil((state.resetAt - Date.now()) / 1000));
         this.hint.setText(`TEAM WIPED — restarting in ${secondsLeft}...`);
       } else if (!this.player.isAlive) {
-        this.hint.setText("DOWN — respawning soon...");
+        const pct = Math.round((state.players.get(room.sessionId)?.reviveProgress ?? 0) * 100);
+        this.hint.setText(
+          pct > 0
+            ? `DOWNED — an ally is reviving you (${pct}%)`
+            : "DOWNED — a teammate must reach you to revive",
+        );
       } else if (state.exitOpen) {
         this.hint.setText("Room cleared — the door ahead is open. Move on!");
       } else {

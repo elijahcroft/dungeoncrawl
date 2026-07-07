@@ -14,27 +14,65 @@
           "grunt"
         ],
         "enemySpawns": [
-          { "enemyId": "frost_sprite", "x": 500, "y": 210 },
-          { "enemyId": "frost_sprite", "x": 500, "y": 430 },
-          { "enemyId": "rime_brute", "x": 700, "y": 320 },
-          { "enemyId": "grunt", "x": 830, "y": 320 }
+          {
+            "enemyId": "frost_sprite",
+            "x": 500,
+            "y": 210
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 500,
+            "y": 430
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 700,
+            "y": 320
+          },
+          {
+            "enemyId": "grunt",
+            "x": 830,
+            "y": 320
+          }
         ],
-        "entrance": { "x": 80, "y": 320 },
-        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
         "walls": [
-          { "x": 340, "y": 110, "w": 40, "h": 170 }
+          {
+            "x": 340,
+            "y": 110,
+            "w": 40,
+            "h": 170
+          }
         ]
       },
       {
         "id": "r2",
         "type": "rest",
         "name": "Sheltered Alcove",
-        "itemSpawns": [
-          { "itemId": "iron_ring", "x": 360, "y": 320 },
-          { "itemId": "potion_heal", "x": 600, "y": 320 }
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "heavy_blade"
         ],
-        "entrance": { "x": 80, "y": 320 },
-        "exit": { "x": 900, "y": 240, "w": 60, "h": 160 },
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
         "walls": []
       },
       {
@@ -42,8 +80,14 @@
         "type": "boss",
         "name": "Warden's Frozen Hall",
         "boss": "frostbound_warden",
-        "bossSpawn": { "x": 640, "y": 320 },
-        "entrance": { "x": 80, "y": 320 },
+        "bossSpawn": {
+          "x": 640,
+          "y": 320
+        },
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
         "exit": null,
         "walls": []
       }
@@ -430,23 +474,6 @@
         "id": "r2",
         "type": "rest",
         "name": "Respite",
-        "itemSpawns": [
-          {
-            "itemId": "iron_ring",
-            "x": 360,
-            "y": 320
-          },
-          {
-            "itemId": "w_spear",
-            "x": 600,
-            "y": 320
-          },
-          {
-            "itemId": "potion_heal",
-            "x": 480,
-            "y": 420
-          }
-        ],
         "entrance": {
           "x": 80,
           "y": 320
@@ -461,7 +488,13 @@
         "offset": {
           "x": 1180,
           "y": 0
-        }
+        },
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
+        ]
       },
       {
         "id": "r3",
@@ -756,18 +789,6 @@
         "id": "r2",
         "type": "rest",
         "name": "King's Walk",
-        "itemSpawns": [
-          {
-            "itemId": "w_rapier",
-            "x": 360,
-            "y": 320
-          },
-          {
-            "itemId": "swift_boots",
-            "x": 600,
-            "y": 320
-          }
-        ],
         "entrance": {
           "x": 80,
           "y": 320
@@ -782,7 +803,13 @@
         "offset": {
           "x": 1180,
           "y": 0
-        }
+        },
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
+        ]
       },
       {
         "id": "r3",
@@ -955,6 +982,7 @@
           "husk",
           "husk",
           "archer",
+          "archer",
           "archer"
         ],
         "enemySpawns": [
@@ -982,6 +1010,18 @@
             "enemyId": "archer",
             "x": 840,
             "y": 460
+          },
+          {
+            "enemyId": "archer",
+            "x": 350,
+            "y": 500
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_rapier",
+            "x": 300,
+            "y": 130
           }
         ],
         "entrance": {
@@ -1084,12 +1124,11 @@
         "id": "r3",
         "type": "rest",
         "name": "Ashen Respite",
-        "itemSpawns": [
-          {
-            "itemId": "w_katana",
-            "x": 480,
-            "y": 320
-          }
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
         ],
         "entrance": {
           "x": 80,
@@ -1568,23 +1607,6 @@
         "id": "r5",
         "type": "rest",
         "name": "Cooling Chapel",
-        "itemSpawns": [
-          {
-            "itemId": "iron_ring",
-            "x": 300,
-            "y": 320
-          },
-          {
-            "itemId": "w_dagger",
-            "x": 480,
-            "y": 320
-          },
-          {
-            "itemId": "w_axe",
-            "x": 660,
-            "y": 320
-          }
-        ],
         "entrance": {
           "x": 80,
           "y": 320
@@ -1599,7 +1621,13 @@
         "offset": {
           "x": 0,
           "y": 1720
-        }
+        },
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
+        ]
       },
       {
         "id": "r6",
@@ -1793,6 +1821,16 @@
             "itemId": "w_spear",
             "x": 180,
             "y": 320
+          },
+          {
+            "itemId": "w_crossbow",
+            "x": 150,
+            "y": 580
+          },
+          {
+            "itemId": "w_katana",
+            "x": 190,
+            "y": 80
           }
         ],
         "entrance": {
@@ -2023,22 +2061,11 @@
         "id": "r5",
         "type": "rest",
         "name": "Moonwell Landing",
-        "itemSpawns": [
-          {
-            "itemId": "iron_ring",
-            "x": 300,
-            "y": 320
-          },
-          {
-            "itemId": "w_dagger",
-            "x": 480,
-            "y": 320
-          },
-          {
-            "itemId": "w_sword",
-            "x": 660,
-            "y": 320
-          }
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
         ],
         "entrance": {
           "x": 80,
@@ -2540,7 +2567,26 @@
           "husk",
           "imp",
           "archer",
-          "archer"
+          "archer",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp"
         ],
         "enemySpawns": [
           {
@@ -2567,6 +2613,101 @@
             "enemyId": "archer",
             "x": 810,
             "y": 490
+          },
+          {
+            "enemyId": "imp",
+            "x": 510,
+            "y": 480
+          },
+          {
+            "enemyId": "imp",
+            "x": 630,
+            "y": 500
+          },
+          {
+            "enemyId": "imp",
+            "x": 670,
+            "y": 510
+          },
+          {
+            "enemyId": "imp",
+            "x": 720,
+            "y": 520
+          },
+          {
+            "enemyId": "imp",
+            "x": 730,
+            "y": 450
+          },
+          {
+            "enemyId": "imp",
+            "x": 720,
+            "y": 390
+          },
+          {
+            "enemyId": "imp",
+            "x": 710,
+            "y": 300
+          },
+          {
+            "enemyId": "imp",
+            "x": 710,
+            "y": 270
+          },
+          {
+            "enemyId": "imp",
+            "x": 710,
+            "y": 210
+          },
+          {
+            "enemyId": "imp",
+            "x": 700,
+            "y": 180
+          },
+          {
+            "enemyId": "imp",
+            "x": 660,
+            "y": 150
+          },
+          {
+            "enemyId": "imp",
+            "x": 610,
+            "y": 150
+          },
+          {
+            "enemyId": "imp",
+            "x": 540,
+            "y": 160
+          },
+          {
+            "enemyId": "imp",
+            "x": 520,
+            "y": 200
+          },
+          {
+            "enemyId": "imp",
+            "x": 510,
+            "y": 290
+          },
+          {
+            "enemyId": "imp",
+            "x": 510,
+            "y": 370
+          },
+          {
+            "enemyId": "imp",
+            "x": 490,
+            "y": 420
+          },
+          {
+            "enemyId": "imp",
+            "x": 440,
+            "y": 370
+          },
+          {
+            "enemyId": "imp",
+            "x": 430,
+            "y": 320
           }
         ],
         "itemSpawns": [
@@ -2613,24 +2754,53 @@
       },
       {
         "id": "r2",
-        "type": "rest",
+        "type": "arena",
         "name": "Tool Rack",
-        "itemSpawns": [
+        "spawns": [
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp",
+          "imp"
+        ],
+        "enemySpawns": [
           {
-            "itemId": "w_spear",
-            "x": 320,
-            "y": 320
+            "enemyId": "imp",
+            "x": 540,
+            "y": 280
           },
           {
-            "itemId": "w_axe",
-            "x": 480,
-            "y": 320
+            "enemyId": "imp",
+            "x": 330,
+            "y": 310
           },
           {
-            "itemId": "w_katana",
-            "x": 640,
-            "y": 320
+            "enemyId": "imp",
+            "x": 270,
+            "y": 260
+          },
+          {
+            "enemyId": "imp",
+            "x": 270,
+            "y": 110
+          },
+          {
+            "enemyId": "imp",
+            "x": 450,
+            "y": 120
+          },
+          {
+            "enemyId": "imp",
+            "x": 620,
+            "y": 270
           }
+        ],
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
         ],
         "entrance": {
           "x": 80,
@@ -2657,6 +2827,7 @@
           "stalker",
           "husk",
           "brute",
+          "imp",
           "imp"
         ],
         "enemySpawns": [
@@ -2684,6 +2855,11 @@
             "enemyId": "imp",
             "x": 850,
             "y": 120
+          },
+          {
+            "enemyId": "imp",
+            "x": 420,
+            "y": 310
           }
         ],
         "itemSpawns": [

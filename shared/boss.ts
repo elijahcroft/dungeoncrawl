@@ -88,6 +88,8 @@ export interface BossDef {
   visual?: VisualRecipe;
   /** If set, the enemy walks toward its target (px/sec) while idle and out of attack range, instead of standing still until aggroed. */
   moveSpeed?: number;
+  /** Coward: runs away from the nearest target (at moveSpeed) instead of chasing/attacking. */
+  flees?: boolean;
   /** Gold awarded to the killing player on death. */
   goldReward?: number;
 }
@@ -362,6 +364,15 @@ export class BossLogic {
         const target = this.nearestTarget(targets);
         if (!target) break;
         const dist = distance(this.x, this.y, target.x, target.y);
+        if (this.def.flees) {
+          // Cowards sprint away from the nearest player (with a panicky wobble) and never attack.
+          if (dist <= this.def.aggroRange && this.def.moveSpeed) {
+            const angle = Math.atan2(this.y - target.y, this.x - target.x) + Math.sin(now / 130) * 0.6;
+            this.x += Math.cos(angle) * this.def.moveSpeed * (dtMs / 1000);
+            this.y += Math.sin(angle) * this.def.moveSpeed * (dtMs / 1000);
+          }
+          break;
+        }
         if (dist <= this.def.aggroRange && this.def.moveSpeed && dist > this.minAttackRange()) {
           const dx = target.x - this.x;
           const dy = target.y - this.y;

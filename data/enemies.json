@@ -246,5 +246,23 @@
       }
     },
     "phases": [{ "hpThreshold": 100, "attacks": ["crush"] }]
+  },
+  "gold_gremlin": {
+    "id": "gold_gremlin",
+    "name": "Gold Gremlin",
+    "hpMax": 25,
+    "goldReward": 150,
+    "aggroRange": 420,
+    "moveSpeed": 165,
+    "flees": true,
+    "color": "0xffcc33",
+    "visual": {
+      "bodyShape": "blob",
+      "size": 0.9,
+      "palette": { "body": "0xffcc33", "trim": "0xa8781a", "eyes": "0x33ff88" },
+      "markings": "spots"
+    },
+    "attacks": {},
+    "phases": [{ "hpThreshold": 100, "attacks": [] }]
   }
 }

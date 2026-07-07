@@ -22,9 +22,9 @@ export class RoomProgress {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    // Sits just under the top-left status panel (panelY 12 + panelH 122).
+    // Sits just under the top-left status panel (panelY 12 + panelH 140).
     const x = 24;
-    const y = 146;
+    const y = 164;
 
     this.container = scene.add.container(0, 0).setScrollFactor(0).setDepth(99);
 
@@ -59,7 +59,7 @@ export class RoomProgress {
   /** @param current 1-based room number, @param total room count. */
   update(current: number, total: number, name?: string) {
     const pipX = 26;
-    const pipY = 146 + 15;
+    const pipY = 164 + 15;
 
     this.label.setText(total > 0 ? `ROOM ${current}/${total}` : "");
     this.nameText.setText(name ? name.toUpperCase() : "");

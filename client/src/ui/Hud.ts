@@ -17,6 +17,7 @@ export class Hud {
   private cooldownLabel: Phaser.GameObjects.Text;
   private goldText: Phaser.GameObjects.Text;
   private potionText: Phaser.GameObjects.Text;
+  private accessoryText: Phaser.GameObjects.Text;
   private roomProgress: RoomProgress;
 
   constructor(scene: Phaser.Scene, name: string) {
@@ -24,7 +25,7 @@ export class Hud {
     const panelX = 12;
     const panelY = 12;
     const panelW = 232;
-    const panelH = 122;
+    const panelH = 140;
     const contentX = panelX + 12;
     const barX = panelX + 38;
     const barW = panelW - 38 - 12;
@@ -66,6 +67,11 @@ export class Hud {
       .text(panelX + panelW - 4, panelY + 100, "", { fontSize: "12px", color: "#ff6b6b" })
       .setOrigin(1, 0.5);
     this.container.add(this.potionText);
+
+    this.accessoryText = scene.add
+      .text(contentX, panelY + 120, "Acc: —", { fontSize: "11px", color: "#aeb8c8" })
+      .setOrigin(0, 0.5);
+    this.container.add(this.accessoryText);
 
     // Bar backgrounds/foregrounds are created outside the container (screen-space
     // rectangles at fixed depth) — pull them onto the same depth band as the panel.
@@ -111,6 +117,11 @@ export class Hud {
 
   setPotions(charges: number) {
     this.potionText.setText(charges > 0 ? `Potions x${charges} [E]` : "");
+  }
+
+  /** Names of equipped stat accessories; empty list shows a dash. */
+  setAccessories(names: string[]) {
+    this.accessoryText.setText(names.length > 0 ? `Acc: ${names.join(", ")}` : "Acc: —");
   }
 
   /** Brief red flash on the stamina bar when an action is denied for lack of stamina. */

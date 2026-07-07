@@ -10,6 +10,7 @@ const CONTROLS: [string, string][] = [
   ["SPACE", "Dodge roll (i-frames)"],
   ["J", "Attack"],
   ["E", "Use potion"],
+  ["T/Y/U/G", "Emotes 😂 ❤️ 😱 🐔"],
   ["ESC", "Toggle this menu"],
 ];
 
