@@ -4,8 +4,12 @@ import { Enemy, type BossDef } from "../entities/Enemy";
 import { RemotePlayer } from "../entities/RemotePlayer";
 import { BossBar } from "../ui/BossBar";
 import { Hud } from "../ui/Hud";
+import { ShopPanel, type ShopOffering } from "../ui/ShopPanel";
 import { showDamageText } from "../ui/DamageText";
 import { PauseMenu } from "../ui/PauseMenu";
+import { ResultsPanel, type RunResults } from "../ui/ResultsPanel";
+import { LevelUpPanel, type LevelUpOffer } from "../ui/LevelUpPanel";
+import { LeaderboardPanel } from "../ui/LeaderboardPanel";
 import { sfx } from "../audio/sfx";
 import { Network, type RemotePlayerState, type EnemyState, type ItemPickupState, type DungeonRoomState } from "../network/Network";
 import { joinOptions } from "../joinOptions";
@@ -19,6 +23,7 @@ import { preloadBossArt, ensureWeaponPickupTexture, ensureFloorTexture } from ".
 import { WEAPONS, type WeaponDef } from "../entities/weapons";
 import type { BossAttackDef } from "../../../shared/boss";
 import { classDef } from "../../../shared/classes";
+import { abilityDef, type AbilityDef } from "../../../shared/abilities";
 
 const bossDefs = bossesData as Record<string, BossDef>;
 const enemyDefs = enemiesData as Record<string, BossDef>;
@@ -44,6 +49,8 @@ interface DungeonDef {
   id: string;
   name: string;
   rooms: DungeonRoomDef[];
+  /** Endless dungeons generate one floor at a time server-side; the client renders them as a single room. */
+  endless?: boolean;
 }
 const dungeonDefs = dungeonsData as Record<string, DungeonDef>;
 
@@ -56,6 +63,8 @@ type ItemVisual = {
   visual: Phaser.GameObjects.Arc | Phaser.GameObjects.Sprite;
   glow: Phaser.GameObjects.Arc;
   label: Phaser.GameObjects.Text;
+  /** The itemId currently rendered; when the server swaps it we rebuild the visual. */
+  itemId: string;
 };
 
 // One room is a fixed 960x640 chamber; the dungeon places many of them in a
@@ -78,8 +87,11 @@ const MOVE_SEND_INTERVAL_MS = 50;
 const HIT_STOP_MS = 70;
 const SHAKE_DURATION_MS = 80;
 const SHAKE_INTENSITY = 0.006;
-const DEFAULT_HINT = "WASD move · SPACE dodge roll (i-frames) · J attack · M mute";
+const DEFAULT_HINT = "WASD move · SPACE dodge · J attack · K ability · E potion · M mute · T/Y/U/G emotes 😂❤️😱🐔";
 const OFFLINE_BOSS_ID = "sentinel";
+// Kept just under the server's ITEM_PICKUP_RADIUS (36) so that whenever the prompt
+// shows, the server will accept the pickup — no dead zone where confirm does nothing.
+const PICKUP_PROMPT_RADIUS = 34;
 const MELEE_ENEMY_HURT_RADIUS = 18;
 const MELEE_BOSS_HURT_RADIUS = 36;
 const MELEE_PLAYER_HURT_RADIUS = 16;
@@ -87,7 +99,12 @@ const MELEE_PLAYER_HURT_RADIUS = 16;
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private hud!: Hud;
+  private shopPanel!: ShopPanel;
+  private shopOfferings: ShopOffering[] = [];
   private pauseMenu!: PauseMenu;
+  private resultsPanel!: ResultsPanel;
+  private levelUpPanel!: LevelUpPanel;
+  private leaderboardPanel!: LeaderboardPanel;
   private hint!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private roomText!: Phaser.GameObjects.Text;
@@ -104,6 +121,13 @@ export class GameScene extends Phaser.Scene {
   private lastBossDefId = ""; // remembered so a victory can credit the boss just cleared
   private hurtFlashing = false;
 
+  // Signature class ability (chosen by the player's class) + client-side cooldown gate.
+  private ability?: AbilityDef;
+  private abilityReadyAt = 0;
+  /** Cooldown reduction % from power-ups; shortens the client-side ability gate. */
+  private abilityCdrPct = 0;
+  private localShield?: Phaser.GameObjects.Ellipse;
+
   // Spectator = an admin watching the room with no controllable body.
   private spectator = false;
 
@@ -111,6 +135,10 @@ export class GameScene extends Phaser.Scene {
   private remotePlayers = new Map<string, RemotePlayer>();
   private enemies = new Map<string, Enemy>();
   private itemVisuals = new Map<string, ItemVisual>();
+  // Weapon-drop pickup prompt: floating text + a two-press (pick up → confirm) flow.
+  private pickupPrompt?: Phaser.GameObjects.Text;
+  private pickupJustKey?: Phaser.Input.Keyboard.Key;
+  private pickupConfirmId?: string;
   private projectileVisuals = new Map<string, { core: Phaser.GameObjects.Arc; glow: Phaser.GameObjects.Arc }>();
   private wallBodies: Phaser.GameObjects.Rectangle[] = [];
   private wallCollider?: Phaser.Physics.Arcade.Collider;
@@ -167,6 +195,9 @@ export class GameScene extends Phaser.Scene {
       staminaMax: cls.staminaMax,
       damageMult: cls.damageMult,
       weaponId: cls.starterWeaponId,
+      accessory: cls.accessory,
+      legStyle: cls.legStyle,
+      bulk: cls.bulk,
     });
 
     this.player.onAttack = (x, y, dx, dy) => this.handlePlayerAttack(x, y, dx, dy);
@@ -189,8 +220,23 @@ export class GameScene extends Phaser.Scene {
       if (this.network.connected) this.network.sendUsePotion();
     };
 
+    this.ability = abilityDef(cls.abilityId);
+    this.localShield = this.add
+      .ellipse(this.player.sprite.x, this.player.sprite.y, 46, 46, 0x3a7bd5, 0.14)
+      .setStrokeStyle(2, 0x9fd0ff, 0.95)
+      .setDepth(2)
+      .setVisible(false);
+
     this.hud = new Hud(this, joinOptions.name);
     this.hud.setHpMax(this.player.hpMax);
+    this.shopPanel = new ShopPanel(this);
+    this.shopPanel.onBuy = (i) => this.buyShopOffering(i);
+    this.shopPanel.onReroll = () => {
+      if (this.shopOfferings.length > 0 && this.network.connected) this.network.sendReroll();
+    };
+    this.resultsPanel = new ResultsPanel(this);
+    this.levelUpPanel = new LevelUpPanel(this);
+    this.leaderboardPanel = new LeaderboardPanel(this);
 
     this.roomText = this.add
       .text(480, 8, "", {
@@ -277,8 +323,41 @@ export class GameScene extends Phaser.Scene {
       this.muteText.setText(muted ? "SOUND OFF · M" : "");
     });
 
-    // Offline runs end in a retry prompt instead of a forced page refresh.
-    this.input.keyboard?.on("keydown-R", () => this.retryOffline());
+    // R rerolls the shop when a stall is open; otherwise it's the offline retry key.
+    this.input.keyboard?.on("keydown-R", () => {
+      if (this.shopOfferings.length > 0 && this.network.connected) this.network.sendReroll();
+      else this.retryOffline();
+    });
+
+    // Number keys 1-5 buy the matching shop offering while a stall is visible.
+    (["ONE", "TWO", "THREE", "FOUR", "FIVE"] as const).forEach((key, i) => {
+      this.input.keyboard?.on(`keydown-${key}`, () => this.buyShopOffering(i));
+    });
+
+    // T/Y/U/G fire emotes everyone in the room can see (indices into the server's emote list).
+    (["T", "Y", "U", "G"] as const).forEach((key, i) => {
+      this.input.keyboard?.on(`keydown-${key}`, () => this.network.sendEmote(i));
+    });
+
+    // K triggers the class's signature ability.
+    this.input.keyboard?.on("keydown-K", () => this.useAbility());
+
+    // Weapon pickup shares J with attack; we read the same Key so consuming a press
+    // here (JustDown) stops it also reaching the attack check in the player update.
+    this.pickupJustKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.J);
+    this.pickupPrompt = this.add
+      .text(0, 0, "", {
+        fontSize: "12px",
+        color: "#fff2cc",
+        backgroundColor: "#12101aee",
+        stroke: "#050507",
+        strokeThickness: 3,
+        padding: { x: 8, y: 4 },
+        align: "center",
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(120)
+      .setVisible(false);
 
     this.game.events.on("boss-telegraph", () => sfx.bossTelegraph());
 
@@ -416,6 +495,9 @@ export class GameScene extends Phaser.Scene {
 
     this.spawnAttackFx(weapon, x, y, dirX, dirY);
 
+    // One crit roll per swing — every enemy caught by this swing shares the outcome.
+    const hit = this.player.rollDamage();
+
     let hitAny = false;
     if (this.network.connected) {
       // Cleave: the hitbox strikes every enemy inside it.
@@ -423,8 +505,8 @@ export class GameScene extends Phaser.Scene {
         if (!enemy.isAlive) continue;
         const targetRadius = enemy.isBoss ? MELEE_BOSS_HURT_RADIUS : MELEE_ENEMY_HURT_RADIUS;
         if (!this.weaponHits(weapon, x, y, dirX, dirY, enemy.sprite.x, enemy.sprite.y, targetRadius)) continue;
-        this.network.sendEnemyHit(enemy.id, this.player.damage);
-        this.onEnemyHit(enemy, x, y);
+        this.network.sendEnemyHit(enemy.id, { kind: "weapon", crit: hit.crit });
+        this.onEnemyHit(enemy, x, y, hit.amount, hit.crit);
         hitAny = true;
       }
       // PvP: only live while everyone is idling in the lobby, not mid-dungeon.
@@ -432,17 +514,17 @@ export class GameScene extends Phaser.Scene {
         for (const [sessionId, remote] of this.remotePlayers) {
           if (remote.hp <= 0) continue;
           if (!this.weaponHits(weapon, x, y, dirX, dirY, remote.sprite.x, remote.sprite.y, MELEE_PLAYER_HURT_RADIUS)) continue;
-          this.network.sendPlayerHit(sessionId, this.player.damage);
+          this.network.sendPlayerHit(sessionId, hit.crit);
           this.spawnHitParticles(remote.sprite.x, remote.sprite.y, 0xff6688);
-          this.spawnDamageNumber(remote.sprite.x, remote.sprite.y - 20, this.player.damage);
+          this.spawnDamageNumber(remote.sprite.x, remote.sprite.y - 20, hit.amount, hit.crit);
           hitAny = true;
         }
       }
     } else if (this.offlineEnemy?.isAlive) {
       const targetRadius = this.offlineEnemy.isBoss ? MELEE_BOSS_HURT_RADIUS : MELEE_ENEMY_HURT_RADIUS;
       if (this.weaponHits(weapon, x, y, dirX, dirY, this.offlineEnemy.sprite.x, this.offlineEnemy.sprite.y, targetRadius)) {
-        this.offlineEnemy.takeDamage(this.player.damage);
-        this.onEnemyHit(this.offlineEnemy, x, y);
+        this.offlineEnemy.takeDamage(hit.amount);
+        this.onEnemyHit(this.offlineEnemy, x, y, hit.amount, hit.crit);
         hitAny = true;
       }
     }
@@ -452,17 +534,180 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Shared hit reaction: particles, floating damage number and a knockback shove away from the player. */
-  private onEnemyHit(enemy: Enemy, fromX: number, fromY: number) {
+  /** Live enemies from whichever source is active (networked room or offline boss). */
+  private *liveEnemies(): Iterable<Enemy> {
+    if (this.network.connected) {
+      for (const enemy of this.enemies.values()) if (enemy.isAlive) yield enemy;
+    } else if (this.offlineEnemy?.isAlive) {
+      yield this.offlineEnemy;
+    }
+  }
+
+  /** Report/apply an ability's damage to one enemy, with the shared hit reaction. `dmg` is the local prediction for display/offline. */
+  private dealAbilityHit(enemy: Enemy, ability: AbilityDef, dmg: number, fromX: number, fromY: number) {
+    if (this.network.connected) this.network.sendEnemyHit(enemy.id, { kind: "ability", abilityId: ability.id });
+    else enemy.takeDamage(dmg);
     this.spawnHitParticles(enemy.sprite.x, enemy.sprite.y, 0xffcc33);
-    this.spawnDamageNumber(enemy.sprite.x, enemy.sprite.y - 20, this.player.damage);
+    this.spawnDamageNumber(enemy.sprite.x, enemy.sprite.y - 20, dmg);
+    enemy.applyKnockback(enemy.sprite.x - fromX, enemy.sprite.y - fromY, enemy.isBoss ? 12 : 28);
+  }
+
+  /** Trigger the local player's signature class ability (K), gated by cooldown + stamina. */
+  private useAbility() {
+    const ability = this.ability;
+    if (!ability || this.spectator || !this.player.isAlive) return;
+    const now = this.time.now;
+    if (now < this.abilityReadyAt) return;
+    if (!this.player.canSpendStamina(ability.staminaCost)) {
+      sfx.deny();
+      this.hud.flashStamina();
+      return;
+    }
+    this.abilityReadyAt = now + ability.cooldownMs * (1 - this.abilityCdrPct / 100);
+    this.player.useStamina(ability.staminaCost);
+    // One report per use, for every ability kind: the server enforces the cooldown,
+    // fires on-ability-use effects, and applies heal/shield payloads itself.
+    if (this.network.connected) this.network.sendAbility(ability.id);
+    const px = this.player.sprite.x;
+    const py = this.player.sprite.y;
+    switch (ability.kind) {
+      case "melee_aoe":
+        this.castMeleeAoe(ability, px, py);
+        break;
+      case "dash":
+        this.castDash(ability, px, py);
+        break;
+      case "projectile":
+        this.castVolley(ability, px, py);
+        break;
+      case "heal":
+        this.castHeal(ability, px, py);
+        break;
+      case "shield":
+        this.castGuard(ability);
+        break;
+    }
+  }
+
+  /** Renders a server-broadcast effect (triggered item/power-up procs) — visual only, damage is already applied. */
+  private renderServerFx(fx: { type: string; x: number; y: number; radius?: number; x2?: number; y2?: number }) {
+    if (fx.type === "explosion") {
+      this.spawnAbilityBurst(fx.x, fx.y, fx.radius ?? 90, 0xff8844);
+      this.cameras.main.shake(70, 0.003);
+    } else if (fx.type === "chain" && fx.x2 !== undefined && fx.y2 !== undefined) {
+      const bolt = this.add.graphics().setDepth(62);
+      const midX = (fx.x + fx.x2) / 2 + (Math.random() * 24 - 12);
+      const midY = (fx.y + fx.y2) / 2 + (Math.random() * 24 - 12);
+      bolt.lineStyle(3, 0x9be7ff, 0.95);
+      bolt.beginPath();
+      bolt.moveTo(fx.x, fx.y);
+      bolt.lineTo(midX, midY);
+      bolt.lineTo(fx.x2, fx.y2);
+      bolt.strokePath();
+      this.spawnHitParticles(fx.x2, fx.y2, 0x9be7ff, 8);
+      this.tweens.add({ targets: bolt, alpha: 0, duration: 200, onComplete: () => bolt.destroy() });
+    } else if (fx.type === "heal") {
+      this.spawnHealSparkle(fx.x, fx.y);
+    }
+  }
+
+  /** Expanding ring + burst particles at an ability's origin. */
+  private spawnAbilityBurst(x: number, y: number, radius: number, color: number) {
+    const ring = this.add
+      .circle(x, y, radius, color, 0)
+      .setStrokeStyle(3, color, 0.95)
+      .setDepth(60)
+      .setScale(0.2);
+    this.tweens.add({ targets: ring, scale: 1, alpha: 0, duration: 320, ease: "Cubic.easeOut", onComplete: () => ring.destroy() });
+    this.spawnHitParticles(x, y, color, 14);
+  }
+
+  private castMeleeAoe(a: AbilityDef, px: number, py: number) {
+    const radius = a.radius ?? 120;
+    const dmg = Math.round(this.player.damage * (a.damageMult ?? 1));
+    this.spawnAbilityBurst(px, py, radius, a.id === "arcane_nova" ? 0xaa77ff : 0xffd27a);
+    sfx.cast();
+    this.cameras.main.shake(90, 0.004);
+    let hitAny = false;
+    for (const enemy of this.liveEnemies()) {
+      if (Math.hypot(enemy.sprite.x - px, enemy.sprite.y - py) > radius) continue;
+      this.dealAbilityHit(enemy, a, dmg, px, py);
+      hitAny = true;
+    }
+    if (hitAny) {
+      sfx.hit();
+      this.hitStop(2);
+    }
+  }
+
+  private castDash(a: AbilityDef, px: number, py: number) {
+    const reach = a.reach ?? 200;
+    const radius = a.radius ?? 56;
+    const dmg = Math.round(this.player.damage * (a.damageMult ?? 1));
+    const nx = this.player.facing.x;
+    const ny = this.player.facing.y;
+    this.player.dash(nx, ny, reach, a.durationMs ?? 200);
+    this.spawnRollTrail();
+    sfx.roll();
+    const hitOnce = new Set<string>();
+    // Sweep along the dash path so enemies in the lane are caught, even as the player moves.
+    const strike = () => {
+      for (const enemy of this.liveEnemies()) {
+        if (hitOnce.has(enemy.id)) continue;
+        const relX = enemy.sprite.x - px;
+        const relY = enemy.sprite.y - py;
+        const along = relX * nx + relY * ny;
+        if (along < -radius || along > reach + radius) continue;
+        if (Math.abs(relX * -ny + relY * nx) > radius) continue;
+        hitOnce.add(enemy.id);
+        this.dealAbilityHit(enemy, a, dmg, px, py);
+      }
+    };
+    strike();
+    this.time.delayedCall(90, strike);
+  }
+
+  private castVolley(a: AbilityDef, px: number, py: number) {
+    const bolts = a.projectiles ?? 5;
+    const spread = Phaser.Math.DegToRad(a.spreadDeg ?? 44);
+    const base = Math.atan2(this.player.facing.y, this.player.facing.x);
+    const weapon = WEAPONS["crossbow"] ?? this.player.weapon;
+    for (let i = 0; i < bolts; i++) {
+      const t = bolts === 1 ? 0.5 : i / (bolts - 1);
+      const ang = base - spread / 2 + spread * t;
+      this.spawnCrossbowBolt(weapon, px, py, Math.cos(ang), Math.sin(ang));
+    }
+  }
+
+  private castHeal(a: AbilityDef, px: number, py: number) {
+    sfx.heal();
+    this.spawnHealSparkle(px, py);
+    this.spawnAbilityBurst(px, py, a.radius ?? 150, 0x7dffa8);
+    // Online the server applies the heal (useAbility already sent the report).
+    if (!this.network.connected) this.player.hp = Math.min(this.player.hpMax, this.player.hp + (a.healAmount ?? 0));
+  }
+
+  private castGuard(a: AbilityDef) {
+    sfx.cast();
+    if (this.network.connected) {
+      // Server applies immunity (useAbility already sent the report); localShield follows the synced flag.
+    } else if (this.localShield) {
+      this.localShield.setVisible(true);
+      this.time.delayedCall(a.durationMs ?? 2000, () => this.localShield?.setVisible(false));
+    }
+  }
+
+  /** Shared hit reaction: particles, floating damage number and a knockback shove away from the player. */
+  private onEnemyHit(enemy: Enemy, fromX: number, fromY: number, amount = this.player.damage, crit = false) {
+    this.spawnHitParticles(enemy.sprite.x, enemy.sprite.y, crit ? 0xff5533 : 0xffcc33);
+    this.spawnDamageNumber(enemy.sprite.x, enemy.sprite.y - 20, amount, crit);
     const knock = enemy.isBoss ? 12 : 28;
     enemy.applyKnockback(enemy.sprite.x - fromX, enemy.sprite.y - fromY, knock);
   }
 
-  /** Floating damage number over an enemy/PvP target. */
-  private spawnDamageNumber(x: number, y: number, amount: number) {
-    showDamageText(this, x, y, amount);
+  /** Floating damage number over an enemy/PvP target; crits pop bigger and red. */
+  private spawnDamageNumber(x: number, y: number, amount: number, crit = false) {
+    showDamageText(this, x, y, amount, crit ? { color: "#ff5b4a", fontSize: "22px", rise: 36 } : {});
   }
 
   /** Fading afterimages that trail the player through a dodge roll. */
@@ -693,8 +938,9 @@ export class GameScene extends Phaser.Scene {
     this.bossBar.update();
   }
 
-  private showDeathScreen() {
+  private showDeathScreen(label = "YOU DIED") {
     sfx.death();
+    this.deathText.setText(label);
     this.deathText.setAlpha(0).setScale(1.4);
     this.tweens.add({ targets: this.deathText, alpha: 1, scale: 1, duration: 700, ease: "Cubic.easeOut" });
     this.cameras.main.shake(400, 0.008);
@@ -705,6 +951,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** One-shot centered banner (dungeon cleared / team wiped) that fades in then drifts away. */
+  /** Pop an emote bubble above the emoting player's head; it drifts up and fades out. */
+  private showEmote(sessionId: string, emote: string) {
+    const isLocal = sessionId === this.network.room?.sessionId;
+    const source = isLocal ? this.player.sprite : this.remotePlayers.get(sessionId)?.sprite;
+    if (!source) return;
+    const text = this.add.text(source.x, source.y - 34, emote, { fontSize: "22px" }).setOrigin(0.5, 1).setDepth(60);
+    this.tweens.add({
+      targets: text,
+      y: source.y - 74,
+      alpha: 0,
+      scale: 1.5,
+      duration: 1200,
+      ease: "Cubic.easeOut",
+      onComplete: () => text.destroy(),
+    });
+  }
+
   private showBanner(message: string, color: string) {
     const banner = this.add
       .text(480, 260, message, { fontSize: "44px", color, fontStyle: "bold" })
@@ -850,11 +1113,11 @@ export class GameScene extends Phaser.Scene {
     const applyHit = (targetId: string, tx: number, ty: number, kind: "enemy" | "player", enemy?: Enemy) => {
       hits++;
       if (kind === "enemy" && enemy) {
-        if (this.network.connected) this.network.sendEnemyHit(targetId, this.player.damage);
+        if (this.network.connected) this.network.sendEnemyHit(targetId, { kind: "weapon" });
         else enemy.takeDamage(this.player.damage);
         this.onEnemyHit(enemy, x, y);
       } else {
-        this.network.sendPlayerHit(targetId, this.player.damage);
+        this.network.sendPlayerHit(targetId);
         this.spawnHitParticles(tx, ty, 0xff6688);
         this.spawnDamageNumber(tx, ty - 20, this.player.damage);
       }
@@ -996,6 +1259,11 @@ export class GameScene extends Phaser.Scene {
     const frac = this.player.attackCooldownFraction;
     const ready = frac >= 1;
     this.hud.setCooldown(frac, ready, this.player.weapon.name);
+    if (this.ability) {
+      const cd = this.ability.cooldownMs * (1 - this.abilityCdrPct / 100);
+      const afrac = cd <= 0 ? 1 : Phaser.Math.Clamp((this.time.now - (this.abilityReadyAt - cd)) / cd, 0, 1);
+      this.hud.setAbility(this.ability.name, afrac);
+    }
   }
 
   /** World-space origin for a room; authored `offset` or a horizontal fallback chain. */
@@ -1343,6 +1611,25 @@ export class GameScene extends Phaser.Scene {
     this.minimap.fillCircle(px(p.x), py(p.y), 3.5);
   }
 
+  private syncShop(state: DungeonRoomState, gold: number) {
+    const offerings: ShopOffering[] = [];
+    state.shop.forEach((o) =>
+      offerings.push({ id: o.id, itemId: o.itemId, name: o.name, price: o.price, basePrice: o.basePrice, sold: o.sold, rarity: o.rarity }),
+    );
+    offerings.sort((a, b) => a.id.localeCompare(b.id));
+    this.shopOfferings = offerings;
+    this.shopPanel.setVisible(offerings.length > 0);
+    if (offerings.length > 0) this.shopPanel.update(offerings, gold);
+  }
+
+  private buyShopOffering(index: number) {
+    // The level-up picker owns number keys 1–3 while it's open, so don't also buy.
+    if (this.levelUpPanel.isOpen) return;
+    const offer = this.shopOfferings[index];
+    if (!offer || offer.sold || !this.network.connected) return;
+    this.network.sendBuy(offer.id);
+  }
+
   private objectiveForState(state: DungeonRoomState) {
     if (state.runPhase === "lobby") return "Choose your class, spar if you want, and wait for launch.";
     if (state.runPhase === "victory") return "Run complete.";
@@ -1355,7 +1642,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showRoomIntro(state: DungeonRoomState) {
-    const label = `${state.roomName}  ${state.roomIndex + 1}/${state.roomCount}`;
+    const label = state.roomCount > 0 ? `${state.roomName}  ${state.roomIndex + 1}/${state.roomCount}` : state.roomName;
     const text = this.add
       .text(480, 118, label.toUpperCase(), {
         fontSize: "26px",
@@ -1501,6 +1788,25 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    room.onMessage("emote", (message: { sessionId: string; emote: string }) => {
+      this.showEmote(message.sessionId, message.emote);
+    });
+
+    room.onMessage("run_results", (results: RunResults) => {
+      if (!this.spectator || results.players.length > 0) this.resultsPanel.show(results, room.sessionId);
+    });
+
+    // Server-triggered effect FX (explosions, chain lightning, heals from items/power-ups).
+    room.onMessage("fx", (fx: { type: string; x: number; y: number; radius?: number; x2?: number; y2?: number }) => {
+      this.renderServerFx(fx);
+    });
+
+    // Level-up power-up draft — spectators have no character to build, so skip it.
+    room.onMessage("level_up", (offer: LevelUpOffer) => {
+      if (this.spectator) return;
+      this.levelUpPanel.show(offer, (id) => this.network.sendChoosePowerUp(id));
+    });
+
     const spawn = room.state.players.get(room.sessionId);
     if (spawn) {
       this.player.sprite.setPosition(spawn.x, spawn.y);
@@ -1518,7 +1824,7 @@ export class GameScene extends Phaser.Scene {
     room.state.players.onAdd((state: RemotePlayerState, sessionId: string) => {
       updateStatusText();
       if (sessionId === room.sessionId) return;
-      const remote = new RemotePlayer(this, state.x, state.y, Number(state.color), state.name, Number(state.trimColor), state.cape);
+      const remote = new RemotePlayer(this, state.x, state.y, Number(state.color), state.name, Number(state.trimColor), state.cape, state.className);
       this.remotePlayers.set(sessionId, remote);
     });
 
@@ -1544,45 +1850,114 @@ export class GameScene extends Phaser.Scene {
     });
 
     room.state.items.onAdd((state: ItemPickupState, itemId: string) => {
-      const def = itemDefs[state.itemId];
-      const weapon = def?.weaponId ? WEAPONS[def.weaponId] : undefined;
-      const color = weapon ? weapon.color : def ? Number(def.color) : 0xffffff;
-      const visual = weapon
-        ? this.add.sprite(state.x, state.y, ensureWeaponPickupTexture(this, weapon.sprite, weapon.color))
-        : this.add.circle(state.x, state.y, 10, color);
-      visual.setDepth(10);
-      const glow = this.add.circle(state.x, state.y, 28, color, 0.16).setDepth(9);
-      glow.setBlendMode(Phaser.BlendModes.ADD);
-      const label = this.add
-        .text(state.x, state.y + 30, def?.name ?? "Loot", {
-          fontSize: "10px",
-          color: "#f6e7bf",
-          stroke: "#050507",
-          strokeThickness: 3,
-        })
-        .setOrigin(0.5, 0)
-        .setDepth(11);
-      this.tweens.add({ targets: visual, y: state.y - 8, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      this.tweens.add({ targets: glow, scale: 1.18, alpha: 0.28, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      this.tweens.add({ targets: label, alpha: 0.58, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-      this.itemVisuals.set(itemId, { visual, glow, label });
+      this.itemVisuals.set(itemId, this.buildItemVisual(state));
     });
 
     room.state.items.onRemove((_state: ItemPickupState, itemId: string) => {
       sfx.pickup();
-      const item = this.itemVisuals.get(itemId);
-      if (item) {
-        this.spawnHitParticles(item.visual.x, item.visual.y, item.glow.fillColor, 12);
-        this.tweens.killTweensOf([item.visual, item.glow, item.label]);
-        item.visual.destroy();
-        item.glow.destroy();
-        item.label.destroy();
-      }
+      this.destroyItemVisual(itemId);
       this.itemVisuals.delete(itemId);
     });
   }
 
+  /** Build the floating sprite/glow/label for a floor drop (weapons render as their sprite). */
+  private buildItemVisual(state: ItemPickupState): ItemVisual {
+    const def = itemDefs[state.itemId];
+    const weapon = def?.weaponId ? WEAPONS[def.weaponId] : undefined;
+    const color = weapon ? weapon.color : def ? Number(def.color) : 0xffffff;
+    const visual = weapon
+      ? this.add.sprite(state.x, state.y, ensureWeaponPickupTexture(this, weapon.sprite, weapon.color))
+      : this.add.circle(state.x, state.y, 10, color);
+    visual.setDepth(10);
+    const glow = this.add.circle(state.x, state.y, 28, color, 0.16).setDepth(9);
+    glow.setBlendMode(Phaser.BlendModes.ADD);
+    const label = this.add
+      .text(state.x, state.y + 30, def?.name ?? "Loot", {
+        fontSize: "10px",
+        color: "#f6e7bf",
+        stroke: "#050507",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(11);
+    this.tweens.add({ targets: visual, y: state.y - 8, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    this.tweens.add({ targets: glow, scale: 1.18, alpha: 0.28, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    this.tweens.add({ targets: label, alpha: 0.58, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    return { visual, glow, label, itemId: state.itemId };
+  }
+
+  private destroyItemVisual(itemId: string) {
+    const item = this.itemVisuals.get(itemId);
+    if (!item) return;
+    this.spawnHitParticles(item.visual.x, item.visual.y, item.glow.fillColor, 12);
+    this.tweens.killTweensOf([item.visual, item.glow, item.label]);
+    item.visual.destroy();
+    item.glow.destroy();
+    item.label.destroy();
+  }
+
+  /**
+   * Show a "press J to pick up" prompt over the nearest weapon drop in reach and
+   * drive the two-press pickup: first J arms a confirm, second J swaps the carried
+   * weapon (the old one drops in the loot's place). Consumes the J press so it does
+   * not also fire an attack. Non-weapon loot is still auto-collected by the server.
+   */
+  private updatePickupPrompt() {
+    const prompt = this.pickupPrompt;
+    if (!prompt) return;
+    const room = this.network.room;
+    if (!this.network.connected || !room || !this.player.isAlive || this.spectator) {
+      this.hidePickupPrompt();
+      return;
+    }
+    const px = this.player.sprite.x;
+    const py = this.player.sprite.y;
+    let bestId: string | undefined;
+    let bestItem: ItemPickupState | undefined;
+    let bestDist = PICKUP_PROMPT_RADIUS;
+    room.state.items.forEach((item: ItemPickupState, id: string) => {
+      if (item.taken) return;
+      if (!itemDefs[item.itemId]?.weaponId) return;
+      const dist = Math.hypot(px - item.x, py - item.y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestId = id;
+        bestItem = item;
+      }
+    });
+    if (!bestId || !bestItem) {
+      this.hidePickupPrompt();
+      return;
+    }
+    // Moving to a different drop cancels a pending confirm.
+    if (this.pickupConfirmId && this.pickupConfirmId !== bestId) this.pickupConfirmId = undefined;
+
+    const dropName = itemDefs[bestItem.itemId]?.name ?? "weapon";
+    const confirming = this.pickupConfirmId === bestId;
+    prompt
+      .setText(confirming ? `J again — swap · drops ${this.player.weapon.name}` : `⬇ J  Pick up ${dropName}`)
+      .setPosition(bestItem.x, bestItem.y - 34)
+      .setVisible(true);
+
+    if (this.pickupJustKey && Phaser.Input.Keyboard.JustDown(this.pickupJustKey)) {
+      if (confirming) {
+        this.network.sendPickupWeapon(bestId);
+        this.pickupConfirmId = undefined;
+      } else {
+        this.pickupConfirmId = bestId;
+      }
+    }
+  }
+
+  private hidePickupPrompt() {
+    this.pickupConfirmId = undefined;
+    this.pickupPrompt?.setVisible(false);
+  }
+
   update(time: number, delta: number) {
+    // Resolve weapon-drop interaction first so a J press meant for pickup is
+    // consumed here and doesn't also trigger an attack in the player update.
+    this.updatePickupPrompt();
     if (this.player.isAlive && !this.spectator) {
       this.player.update(time, delta);
     }
@@ -1596,16 +1971,19 @@ export class GameScene extends Phaser.Scene {
       const state = room.state;
 
       // Build the whole dungeon's walkable geometry once, whenever the dungeon changes.
+      // Endless dungeons are the exception: each floor is generated server-side, so
+      // they render as a single server-driven room rather than one stitched space.
       const dungeonDef = state.dungeonId ? dungeonDefs[state.dungeonId] : undefined;
+      const contiguous = dungeonDef && !dungeonDef.endless;
       if (state.dungeonId !== this.dungeonGeomId) {
         this.dungeonGeomId = state.dungeonId;
-        if (dungeonDef) this.buildDungeonGeometry(dungeonDef);
+        if (contiguous) this.buildDungeonGeometry(dungeonDef!);
         else this.teardownDungeonGeometry();
         this.seenRoomKey = "";
         this.lastRoomIntroKey = "";
       }
 
-      if (dungeonDef) {
+      if (contiguous) {
         // Contiguous mode: no per-room rebuild — just move the highlight and open
         // doors as rooms are cleared. The player walks the corridors themselves.
         const roomKey = `${state.roomIndex}:${state.exitOpen}`;
@@ -1624,13 +2002,19 @@ export class GameScene extends Phaser.Scene {
           this.lastRoomIntroKey = introKey;
           this.showRoomIntro(state);
         }
-        this.updateMinimap(dungeonDef, state.roomIndex);
+        this.updateMinimap(dungeonDef!, state.roomIndex);
       } else {
-        // Lobby / offline: single fixed room at the origin.
+        // Endless (server-driven floors) and lobby / offline: a single fixed room at
+        // the origin, rebuilt whenever the room revision changes. Endless additionally
+        // shows a floor intro banner on each descent.
         const roomKey = `${state.dungeonId}:${state.roomId}:${state.roomRevision}`;
         if (roomKey !== this.seenRoomKey) {
           this.seenRoomKey = roomKey;
           this.setActiveRoom(this.roomDefFromState(state));
+        }
+        if (dungeonDef && roomKey !== this.lastRoomIntroKey && state.runPhase === "playing") {
+          this.lastRoomIntroKey = roomKey;
+          this.showRoomIntro(state);
         }
         this.updateMinimap(undefined, 0);
       }
@@ -1643,7 +2027,14 @@ export class GameScene extends Phaser.Scene {
           this.lastTeleportId = localPlayer.teleportId;
         }
         if (localPlayer.weaponId !== this.player.weapon.id) this.player.setWeapon(localPlayer.weaponId);
-        this.player.applyBonuses(localPlayer.hpMax, localPlayer.bonusDamage, localPlayer.bonusSpeedPct);
+        this.player.applyBonuses(
+          localPlayer.hpMax,
+          localPlayer.bonusDamage,
+          localPlayer.bonusSpeedPct,
+          localPlayer.bonusAttackSpeedPct,
+          localPlayer.critChancePct,
+        );
+        this.abilityCdrPct = localPlayer.cdrPct;
         if (localPlayer.lastHitSeq !== this.lastHitSeq) {
           this.lastHitSeq = localPlayer.lastHitSeq;
           this.networkHitSource = { x: localPlayer.lastHitX, y: localPlayer.lastHitY };
@@ -1652,8 +2043,18 @@ export class GameScene extends Phaser.Scene {
         this.hud.setGold(localPlayer.gold);
         this.hud.setPotions(localPlayer.potionCharges);
         this.hud.setHpMax(localPlayer.hpMax);
+        this.hud.setXp(localPlayer.level, localPlayer.xp, localPlayer.xpToNext);
+        this.syncShop(state, localPlayer.gold);
+        const accNames = [localPlayer.accessory0, localPlayer.accessory1]
+          .filter(Boolean)
+          .map((id) => itemDefs[id]?.name ?? id);
+        this.hud.setAccessories(accNames);
         if (!wasAlive && this.player.isAlive) {
           this.player.sprite.setPosition(localPlayer.x, localPlayer.y);
+        }
+        if (this.localShield) {
+          this.localShield.setPosition(this.player.sprite.x, this.player.sprite.y);
+          this.localShield.setVisible(localPlayer.guarding && this.player.isAlive);
         }
       }
       this.hud.setHp(this.player.hp);
@@ -1699,6 +2100,13 @@ export class GameScene extends Phaser.Scene {
 
       for (const [itemId, item] of this.itemVisuals) {
         const itemState = state.items.get(itemId);
+        // A weapon swap repurposes the drop's slot (same key, new itemId): rebuild it.
+        if (itemState && itemState.itemId !== item.itemId) {
+          sfx.pickup();
+          this.destroyItemVisual(itemId);
+          this.itemVisuals.set(itemId, this.buildItemVisual(itemState));
+          continue;
+        }
         const visible = !!itemState && !itemState.taken;
         item.visual.setVisible(visible);
         item.glow.setVisible(visible);
@@ -1740,6 +2148,8 @@ export class GameScene extends Phaser.Scene {
           remoteState.hp,
           remoteState.facingX,
           remoteState.weaponId,
+          remoteState.reviveProgress,
+          remoteState.guarding,
         );
         remote.update();
       }
@@ -1754,13 +2164,16 @@ export class GameScene extends Phaser.Scene {
       if (state.runPhase === "lobby") this.hud.setRoomProgress(0, 0);
       else this.hud.setRoomProgress(state.roomIndex + 1, state.roomCount, state.roomName);
 
+      this.leaderboardPanel.update(state.leaderboardJson);
+      this.leaderboardPanel.setVisible(state.runPhase === "lobby");
+
       if (state.adminNoticeId !== this.lastAdminNoticeId) {
         this.lastAdminNoticeId = state.adminNoticeId;
         if (state.adminNotice) this.showBanner(state.adminNotice, "#d8e8ff");
       }
 
-      // "YOU DIED" on downing, cleared on respawn.
-      if (this.wasPlayerAlive && !this.player.isAlive) this.showDeathScreen();
+      // "DOWNED" on going down (a teammate can revive you), cleared on revive/respawn.
+      if (this.wasPlayerAlive && !this.player.isAlive) this.showDeathScreen("DOWNED");
       else if (!this.wasPlayerAlive && this.player.isAlive) this.hideDeathScreen();
       this.wasPlayerAlive = this.player.isAlive;
 
@@ -1776,6 +2189,9 @@ export class GameScene extends Phaser.Scene {
         } else if (state.runPhase === "wiped") {
           this.showBanner("TEAM WIPED", "#a01818");
           if (!this.spectator) recordRun({ won: false });
+        } else if (state.runPhase === "playing" || state.runPhase === "lobby") {
+          // A new run (or a return to the lobby) clears the previous scoreboard.
+          this.resultsPanel.hide();
         }
         this.lastRunPhase = state.runPhase;
       }
@@ -1794,7 +2210,12 @@ export class GameScene extends Phaser.Scene {
         const secondsLeft = Math.max(0, Math.ceil((state.resetAt - Date.now()) / 1000));
         this.hint.setText(`TEAM WIPED — restarting in ${secondsLeft}...`);
       } else if (!this.player.isAlive) {
-        this.hint.setText("DOWN — respawning soon...");
+        const pct = Math.round((state.players.get(room.sessionId)?.reviveProgress ?? 0) * 100);
+        this.hint.setText(
+          pct > 0
+            ? `DOWNED — an ally is reviving you (${pct}%)`
+            : "DOWNED — a teammate must reach you to revive",
+        );
       } else if (state.exitOpen) {
         this.hint.setText("Room cleared — the door ahead is open. Move on!");
       } else {

@@ -26,6 +26,20 @@ export class PlayerState extends Schema {
   @type("number") lastHitSeq = 0;
   @type("number") gold = 0;
   @type("number") potionCharges = 0;
+  @type("string") accessory0 = "";
+  @type("string") accessory1 = "";
+  @type("number") level = 1;
+  @type("number") xp = 0;
+  @type("number") xpToNext = 40;
+  @type("number") pendingLevelUps = 0;
+  @type("string") powerUpIds = "";
+  @type("number") reviveProgress = 0;
+  @type("boolean") guarding = false;
+  @type("number") bonusAttackSpeedPct = 0;
+  @type("number") critChancePct = 0;
+  @type("number") lifestealPct = 0;
+  @type("number") cdrPct = 0;
+  @type("number") regenPerSec = 0;
 }
 
 export class EnemyState extends Schema {
@@ -60,11 +74,22 @@ export class ItemPickupState extends Schema {
   @type("boolean") taken = false;
 }
 
+export class ShopOfferingState extends Schema {
+  @type("string") id = "";
+  @type("string") itemId = "";
+  @type("string") name = "";
+  @type("number") price = 0;
+  @type("number") basePrice = 0;
+  @type("boolean") sold = false;
+  @type("string") rarity = "common";
+}
+
 export class DungeonRoomState extends Schema {
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: EnemyState }) enemies = new MapSchema<EnemyState>();
   @type({ map: ItemPickupState }) items = new MapSchema<ItemPickupState>();
   @type({ map: ProjectileState }) projectiles = new MapSchema<ProjectileState>();
+  @type({ map: ShopOfferingState }) shop = new MapSchema<ShopOfferingState>();
   @type("string") dungeonId = "";
   @type("string") dungeonName = "";
   @type("string") roomId = "";
@@ -81,4 +106,5 @@ export class DungeonRoomState extends Schema {
   @type("number") adminCount = 0;
   @type("string") adminNotice = "";
   @type("number") adminNoticeId = 0;
+  @type("string") leaderboardJson = "";
 }

@@ -82,7 +82,7 @@ Colyseus server is up — the client falls back to single-player if it can't con
   with an auto-pickup equip loop, a second longer dungeon (The Sable Crypt), and
   `data/SCHEMA.md` documenting every JSON schema so new content needs zero code changes.
 - **Phase 11 (partial, by design — it's a menu, not a checklist):** Player classes
-  (Warrior/Guardian, chosen on the join screen), character customization (name + color),
+  (Warrior/Guardian/Cleric, chosen on the join screen), character customization (name + color),
   and boss/enemy HP scaling by player count. The rest of the Phase 11 backlog (revive
   mechanic, spectator mode, persistent progression, etc.) is optional future work.
 - **Classroom admin mode (done):** Students land in one shared lobby while an admin launches
@@ -100,6 +100,7 @@ See `soulslike-boss-game-plan.md` and `NEXT-STEPS.md` for the full plan and hist
 - `WASD` — move
 - `SPACE` — dodge roll (grants brief invulnerability, costs stamina)
 - `J` — attack with the equipped weapon (costs stamina)
+- `K` — use your class ability
 - `E` — use a healing charge (picked up from consumable items; carry up to 3)
 - `M` — mute/unmute sound
 - `R` — retry/rematch after an offline (single-player) duel ends
