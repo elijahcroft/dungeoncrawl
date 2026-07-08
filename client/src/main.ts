@@ -286,8 +286,55 @@ function setupAdmin() {
     return normalized;
   }
 
+  function isAutoRoomId(id: string) {
+    return /^r\d+$/.test(id) || /^room-\d+(?:-\d+)*$/.test(id);
+  }
+
+  function isAutoRoomName(name: string) {
+    return /^room \d+$/i.test(name.trim());
+  }
+
+  function defaultRoomName(type: RoomType, index: number) {
+    const prefix =
+      type === "boss" ? "Boss Room" : type === "rest" ? "Rest Room" : type === "treasure" ? "Treasure Room" : "Arena Room";
+    return `${prefix} ${index + 1}`;
+  }
+
+  function reindexDungeonRooms(dungeon: DungeonDef): DungeonDef {
+    const originalRooms = dungeon.rooms.map((room) => normalizeRoom(room));
+    const seen = new Set<string>();
+    const idMap = new Map<string, string>();
+
+    originalRooms.forEach((room, index) => {
+      const fallbackId = `r${index + 1}`;
+      const trimmedId = room.id.trim();
+      const shouldRenumber = isAutoRoomId(trimmedId) || seen.has(trimmedId);
+      const nextId = shouldRenumber ? fallbackId : trimmedId;
+      seen.add(nextId);
+      idMap.set(trimmedId, nextId);
+    });
+
+    const rooms = originalRooms.map((room, index) => {
+      const nextId = idMap.get(room.id.trim()) ?? `r${index + 1}`;
+      const nextName = isAutoRoomName(room.name) ? defaultRoomName(room.type, index) : room.name;
+      return {
+        ...room,
+        id: nextId,
+        name: nextName,
+      };
+    });
+
+    return {
+      ...dungeon,
+      rooms: rooms.map((room) => ({
+        ...room,
+        exits: room.exits?.map((id) => idMap.get(id) ?? id),
+      })),
+    };
+  }
+
   function normalizeDungeon(dungeon: DungeonDef): DungeonDef {
-    return { ...dungeon, rooms: dungeon.rooms.map((room) => normalizeRoom(room)) };
+    return reindexDungeonRooms({ ...dungeon, rooms: dungeon.rooms.map((room) => normalizeRoom(room)) });
   }
 
   function currentRoom() {
@@ -781,9 +828,9 @@ function setupAdmin() {
 
   function newRoom(index: number): DungeonRoomDef {
     return {
-      id: `room-${index + 1}`,
+      id: `r${index + 1}`,
       type: "arena",
-      name: `Room ${index + 1}`,
+      name: defaultRoomName("arena", index),
       spawns: [],
       enemySpawns: [],
       entrance: { x: 80, y: 320 },
@@ -794,8 +841,10 @@ function setupAdmin() {
 
   function insertRoom(room: DungeonRoomDef) {
     const inserted = normalizeRoom(clone(room));
-    inserted.id = `${slugify(inserted.id)}-${builderDungeon.rooms.length + 1}`;
+    if (isAutoRoomId(inserted.id)) inserted.id = `r${selectedRoomIndex + 2}`;
+    if (isAutoRoomName(inserted.name)) inserted.name = defaultRoomName(inserted.type, selectedRoomIndex + 1);
     builderDungeon.rooms.splice(selectedRoomIndex + 1, 0, inserted);
+    builderDungeon = normalizeDungeon(builderDungeon);
     selectedRoomIndex += 1;
     selectedObject = null;
     setBuilderDirty(true);
@@ -953,6 +1002,7 @@ function setupAdmin() {
   document.getElementById("room-delete")!.addEventListener("click", () => {
     if (builderDungeon.rooms.length <= 1) return;
     builderDungeon.rooms.splice(selectedRoomIndex, 1);
+    builderDungeon = normalizeDungeon(builderDungeon);
     selectedRoomIndex = clamp(selectedRoomIndex, 0, builderDungeon.rooms.length - 1);
     selectedObject = null;
     setBuilderDirty(true);

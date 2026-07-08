@@ -28,7 +28,18 @@ export class PlayerState extends Schema {
   @type("number") potionCharges = 0;
   @type("string") accessory0 = "";
   @type("string") accessory1 = "";
+  @type("number") level = 1;
+  @type("number") xp = 0;
+  @type("number") xpToNext = 40;
+  @type("number") pendingLevelUps = 0;
+  @type("string") powerUpIds = "";
   @type("number") reviveProgress = 0;
+  @type("boolean") guarding = false;
+  @type("number") bonusAttackSpeedPct = 0;
+  @type("number") critChancePct = 0;
+  @type("number") lifestealPct = 0;
+  @type("number") cdrPct = 0;
+  @type("number") regenPerSec = 0;
 }
 
 export class EnemyState extends Schema {
@@ -95,4 +106,5 @@ export class DungeonRoomState extends Schema {
   @type("number") adminCount = 0;
   @type("string") adminNotice = "";
   @type("number") adminNoticeId = 0;
+  @type("string") leaderboardJson = "";
 }

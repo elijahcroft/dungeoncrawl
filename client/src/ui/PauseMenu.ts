@@ -9,6 +9,7 @@ const CONTROLS: [string, string][] = [
   ["WASD", "Move"],
   ["SPACE", "Dodge roll (i-frames)"],
   ["J", "Attack"],
+  ["K", "Class ability (per class)"],
   ["E", "Use potion"],
   ["T/Y/U/G", "Emotes 😂 ❤️ 😱 🐔"],
   ["ESC", "Toggle this menu"],
@@ -20,7 +21,7 @@ export class PauseMenu {
 
   constructor(scene: Phaser.Scene) {
     const panelW = 340;
-    const panelH = 250;
+    const panelH = 282;
     const panelX = 480 - panelW / 2;
     const panelY = 320 - panelH / 2;
 

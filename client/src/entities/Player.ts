@@ -13,6 +13,8 @@ import {
   type WeaponSprite,
 } from "../gfx/sprites";
 import { WEAPONS, STARTER_WEAPON_ID, type WeaponDef } from "./weapons";
+import { CRIT_MULTIPLIER } from "../../../shared/powerups";
+import type { PlayerAccessory } from "../../../shared/classes";
 
 const MOVE_SPEED = 220;
 // Velocity is eased toward the input target instead of snapping, so the hero has
@@ -56,6 +58,10 @@ export interface PlayerOptions {
   damageMult?: number;
   /** Weapon to spawn holding. Defaults to the starter sword. */
   weaponId?: string;
+  /** Class silhouette accents — purely cosmetic (see `ClassDef`). */
+  accessory?: PlayerAccessory;
+  legStyle?: "boots" | "robe";
+  bulk?: number;
 }
 
 export class Player {
@@ -73,8 +79,14 @@ export class Player {
   private color: number;
   private trimColor: number;
   private cape: boolean;
+  private accessory: PlayerAccessory;
+  private legStyle: "boots" | "robe";
+  private bulk: number;
   private moveSpeed: number;
   private bonusDamage: number;
+  private damageMult: number;
+  private attackSpeedPct = 0;
+  private critChancePct = 0;
   private currentWeapon: WeaponDef = WEAPONS[STARTER_WEAPON_ID];
 
   private isRolling = false;
@@ -128,14 +140,20 @@ export class Player {
     this.color = options.color ?? 0x4da6ff;
     this.trimColor = options.trimColor ?? 0xe2e8f2;
     this.cape = options.cape ?? true;
+    this.accessory = options.accessory ?? "none";
+    this.legStyle = options.legStyle ?? "boots";
+    this.bulk = options.bulk ?? 1;
     this.hpMax = options.hpMax ?? HP_MAX;
     this.hp = this.hpMax;
     this.moveSpeed = MOVE_SPEED * (1 + (options.speedPct ?? 0) / 100);
     this.bonusDamage = options.bonusDamage ?? 0;
+    this.damageMult = options.damageMult ?? 1;
+    this.staminaMax = options.staminaMax ?? STAMINA_MAX;
+    this.stamina = this.staminaMax;
 
     this.shadow = scene.add.image(x, y + 26, ensureShadowTexture(scene, 30)).setDepth(-0.5);
 
-    const textureKey = ensurePlayerTexture(scene, this.color, "idle0", this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape);
+    const textureKey = ensurePlayerTexture(scene, this.color, "idle0", this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape, this.accessory, this.legStyle, this.bulk);
     const sprite = scene.add.sprite(x, y, textureKey) as Phaser.GameObjects.Sprite & {
       body: Phaser.Physics.Arcade.Body;
     };
@@ -179,7 +197,42 @@ export class Player {
   }
 
   get damage() {
-    return this.currentWeapon.damage + this.bonusDamage;
+    return Math.round((this.currentWeapon.damage + this.bonusDamage) * this.damageMult);
+  }
+
+  /** Current weapon cooldown after attack-speed bonuses (faster = shorter). */
+  private get attackCooldownMs() {
+    return this.currentWeapon.cooldownMs / (1 + this.attackSpeedPct / 100);
+  }
+
+  /**
+   * Rolls a single hit's damage, applying crit chance. Called once per swing so
+   * every enemy struck by that swing shares the same crit outcome.
+   */
+  rollDamage(): { amount: number; crit: boolean } {
+    const crit = this.critChancePct > 0 && Math.random() * 100 < this.critChancePct;
+    return { amount: crit ? this.damage * CRIT_MULTIPLIER : this.damage, crit };
+  }
+
+  /** Whether the player can currently afford `cost` stamina (for scene-driven abilities). */
+  canSpendStamina(cost: number) {
+    return this.stamina >= cost;
+  }
+
+  /** Public stamina spend for scene-driven actions (signature abilities). */
+  useStamina(cost: number) {
+    this.spendStamina(cost);
+  }
+
+  /** Drives a forward lunge — used by the Rogue's Dash Strike ability. Brief i-frames locally. */
+  dash(dirX: number, dirY: number, distancePx: number, durationMs = 200) {
+    const now = this.scene.time.now;
+    const len = Math.hypot(dirX, dirY) || 1;
+    this.attackLungeDir.set(dirX / len, dirY / len);
+    this.attackLungeUntil = now + durationMs;
+    this.attackLungeSpeed = (distancePx / durationMs) * 1000;
+    this.invulnerableUntil = Math.max(this.invulnerableUntil, this.attackLungeUntil);
+    this.popScale(1.2, 0.82);
   }
 
   /**
@@ -187,7 +240,7 @@ export class Player {
    * Reads 1 before the first swing / whenever off cooldown.
    */
   get attackCooldownFraction() {
-    const cd = this.currentWeapon.cooldownMs;
+    const cd = this.attackCooldownMs;
     if (cd <= 0) return 1;
     const elapsed = this.scene.time.now - (this.attackCooldownUntil - cd);
     return Phaser.Math.Clamp(elapsed / cd, 0, 1);
@@ -199,7 +252,7 @@ export class Player {
     if (!next) return;
     this.currentWeapon = next;
     this.sprite.setTexture(
-      ensurePlayerTexture(this.scene, this.color, this.currentPose, this.bakedWeaponSprite(), next.color, this.trimColor, this.cape),
+      ensurePlayerTexture(this.scene, this.color, this.currentPose, this.bakedWeaponSprite(), next.color, this.trimColor, this.cape, this.accessory, this.legStyle, this.bulk),
     );
     this.refreshWeaponOverlay();
   }
@@ -245,11 +298,13 @@ export class Player {
     w.setAlpha(this.sprite.alpha);
   }
 
-  /** Reconciles live stat bonuses (class + picked-up items) from the server. */
-  applyBonuses(hpMax: number, bonusDamage: number, bonusSpeedPct: number) {
+  /** Reconciles live stat bonuses (class + picked-up items + power-ups) from the server. */
+  applyBonuses(hpMax: number, bonusDamage: number, bonusSpeedPct: number, attackSpeedPct = 0, critChancePct = 0) {
     this.hpMax = hpMax;
     this.moveSpeed = MOVE_SPEED * (1 + bonusSpeedPct / 100);
     this.bonusDamage = bonusDamage;
+    this.attackSpeedPct = attackSpeedPct;
+    this.critChancePct = critChancePct;
   }
 
   /** Brief directional shove applied when the player is hit (visible through the input-driven velocity). */
@@ -410,7 +465,7 @@ export class Player {
       this.spendStamina(ATTACK_STAMINA_COST);
       this.aimAngle = Math.atan2(this.facing.y, this.facing.x);
       this.aimDir.copy(this.facing);
-      this.attackCooldownUntil = now + w.cooldownMs;
+      this.attackCooldownUntil = now + this.attackCooldownMs;
       this.attackActiveUntil = now + w.swingMs;
       this.onSwing?.();
       // Schedule this swing's hits (combos land multiple times across the swing window).
@@ -439,7 +494,7 @@ export class Player {
     if (pose === this.currentPose) return;
     this.currentPose = pose;
     this.sprite.setTexture(
-      ensurePlayerTexture(this.scene, this.color, pose, this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape),
+      ensurePlayerTexture(this.scene, this.color, pose, this.bakedWeaponSprite(), this.currentWeapon.color, this.trimColor, this.cape, this.accessory, this.legStyle, this.bulk),
     );
   }
 

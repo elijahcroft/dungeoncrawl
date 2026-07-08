@@ -3151,9 +3151,9 @@
     "name": "New Dungeon",
     "rooms": [
       {
-        "id": "room-1",
-        "type": "arena",
-        "name": "Room 1",
+        "id": "r1",
+        "type": "boss",
+        "name": "Arena Room 1",
         "spawns": [
           "slimeling",
           "slimeling"
@@ -3170,6 +3170,11 @@
             "y": 250
           }
         ],
+        "boss": "ancient_red_dragon",
+        "bossSpawn": {
+          "x": 610,
+          "y": 570
+        },
         "entrance": {
           "x": 360,
           "y": 30
@@ -3183,9 +3188,9 @@
         "walls": []
       },
       {
-        "id": "room-1-2",
+        "id": "r2",
         "type": "arena",
-        "name": "Room 1",
+        "name": "Arena Room 2",
         "spawns": [
           "slimeling"
         ],
@@ -3209,9 +3214,9 @@
         "walls": []
       },
       {
-        "id": "room-1-2-3",
-        "type": "arena",
-        "name": "Room 1",
+        "id": "r3",
+        "type": "boss",
+        "name": "Arena Room 3",
         "spawns": [
           "slimeling"
         ],
@@ -3222,6 +3227,11 @@
             "y": 310
           }
         ],
+        "boss": "ancient_red_dragon",
+        "bossSpawn": {
+          "x": 320,
+          "y": 290
+        },
         "entrance": {
           "x": 440,
           "y": 60
@@ -3244,6 +3254,30 @@
         "id": "r1",
         "type": "arena",
         "name": "The Fork",
+        "spawns": [
+          "grunt",
+          "grunt",
+          "slimeling",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute",
+          "rime_brute"
+        ],
         "enemySpawns": [
           {
             "enemyId": "grunt",
@@ -3259,6 +3293,101 @@
             "enemyId": "slimeling",
             "x": 420,
             "y": 380
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 540,
+            "y": 150
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 370,
+            "y": 110
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 280,
+            "y": 210
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 280,
+            "y": 250
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 320,
+            "y": 450
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 330,
+            "y": 500
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 200,
+            "y": 580
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 120,
+            "y": 560
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 390,
+            "y": 530
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 620,
+            "y": 560
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 710,
+            "y": 560
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 800,
+            "y": 400
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 760,
+            "y": 300
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 670,
+            "y": 230
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 550,
+            "y": 220
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 330,
+            "y": 360
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 220,
+            "y": 390
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 210,
+            "y": 330
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 470,
+            "y": 300
           }
         ],
         "entrance": {
@@ -3296,8 +3425,24 @@
       },
       {
         "id": "r2",
-        "type": "treasure",
+        "type": "arena",
         "name": "The High Road",
+        "spawns": [
+          "rime_brute",
+          "rime_brute"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "rime_brute",
+            "x": 660,
+            "y": 410
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 300,
+            "y": 400
+          }
+        ],
         "item": "swift_boots",
         "itemSpawns": [
           {
@@ -3342,6 +3487,27 @@
         "id": "r3",
         "type": "arena",
         "name": "The Low Road",
+        "spawns": [
+          "brute",
+          "archer",
+          "archer",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite"
+        ],
         "enemySpawns": [
           {
             "enemyId": "brute",
@@ -3357,6 +3523,86 @@
             "enemyId": "archer",
             "x": 720,
             "y": 440
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 660,
+            "y": 590
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 630,
+            "y": 580
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 490,
+            "y": 570
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 460,
+            "y": 560
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 430,
+            "y": 550
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 390,
+            "y": 520
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 370,
+            "y": 490
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 360,
+            "y": 460
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 370,
+            "y": 420
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 500,
+            "y": 400
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 550,
+            "y": 450
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 620,
+            "y": 480
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 710,
+            "y": 470
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 750,
+            "y": 420
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 780,
+            "y": 340
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 770,
+            "y": 320
           }
         ],
         "itemSpawns": [
@@ -3412,6 +3658,3206 @@
           "y": -860
         },
         "exits": []
+      },
+      {
+        "id": "r5",
+        "type": "boss",
+        "name": "Where Paths Meet",
+        "spawns": [
+          "frost_sprite",
+          "frost_sprite"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "frost_sprite",
+            "x": 630,
+            "y": 460
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 330,
+            "y": 330
+          }
+        ],
+        "boss": "warden",
+        "bossSpawn": {
+          "x": 570,
+          "y": 180
+        },
+        "entrance": {
+          "x": 480,
+          "y": 560
+        },
+        "exit": null,
+        "walls": [],
+        "offset": {
+          "x": 1180,
+          "y": -860
+        },
+        "exits": []
+      }
+    ]
+  },
+  "midnight-cram-catacombs": {
+    "id": "midnight-cram-catacombs",
+    "name": "The Midnight Cram Catacombs",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "Late Bell Gate",
+        "spawns": [
+          "grunt",
+          "stalker",
+          "husk",
+          "archer"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "grunt",
+            "x": 250,
+            "y": 320
+          },
+          {
+            "enemyId": "stalker",
+            "x": 500,
+            "y": 190
+          },
+          {
+            "enemyId": "husk",
+            "x": 500,
+            "y": 450
+          },
+          {
+            "enemyId": "archer",
+            "x": 780,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_rapier",
+            "x": 170,
+            "y": 130
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 140,
+            "y": 540
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 720,
+            "y": 570
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 720,
+            "y": 210
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 300,
+            "y": 120,
+            "w": 40,
+            "h": 400
+          },
+          {
+            "x": 620,
+            "y": 120,
+            "w": 40,
+            "h": 400
+          },
+          {
+            "x": 340,
+            "y": 120,
+            "w": 280,
+            "h": 40
+          },
+          {
+            "x": 340,
+            "y": 480,
+            "w": 280,
+            "h": 40
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "r2",
+        "type": "arena",
+        "name": "Equation Crossroads",
+        "spawns": [
+          "imp",
+          "archer",
+          "stalker",
+          "brute",
+          "husk"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "imp",
+            "x": 310,
+            "y": 180
+          },
+          {
+            "enemyId": "archer",
+            "x": 770,
+            "y": 150
+          },
+          {
+            "enemyId": "stalker",
+            "x": 290,
+            "y": 470
+          },
+          {
+            "enemyId": "brute",
+            "x": 660,
+            "y": 420
+          },
+          {
+            "enemyId": "husk",
+            "x": 520,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 250,
+            "y": 150,
+            "w": 60,
+            "h": 340
+          },
+          {
+            "x": 470,
+            "y": 0,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 470,
+            "y": 420,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 650,
+            "y": 150,
+            "w": 60,
+            "h": 340
+          }
+        ],
+        "offset": {
+          "x": 1180,
+          "y": 0
+        },
+        "exits": [
+          "r3",
+          "r4"
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "arena",
+        "name": "Quiet Stacks",
+        "spawns": [
+          "archer",
+          "archer",
+          "imp",
+          "husk",
+          "stalker"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "archer",
+            "x": 180,
+            "y": 150
+          },
+          {
+            "enemyId": "archer",
+            "x": 800,
+            "y": 150
+          },
+          {
+            "enemyId": "imp",
+            "x": 500,
+            "y": 320
+          },
+          {
+            "enemyId": "husk",
+            "x": 230,
+            "y": 500
+          },
+          {
+            "enemyId": "stalker",
+            "x": 760,
+            "y": 470
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_crossbow",
+            "x": 500,
+            "y": 560
+          }
+        ],
+        "entrance": {
+          "x": 480,
+          "y": 560
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 260,
+            "y": 120,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 260,
+            "y": 340,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 500,
+            "y": 120,
+            "w": 40,
+            "h": 400
+          },
+          {
+            "x": 740,
+            "y": 120,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 740,
+            "y": 340,
+            "w": 40,
+            "h": 180
+          }
+        ],
+        "offset": {
+          "x": 1180,
+          "y": -860
+        },
+        "exits": [
+          "r5"
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "arena",
+        "name": "Detention Forge",
+        "spawns": [
+          "brute",
+          "brute",
+          "stalker",
+          "husk",
+          "husk"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "brute",
+            "x": 280,
+            "y": 160
+          },
+          {
+            "enemyId": "brute",
+            "x": 780,
+            "y": 470
+          },
+          {
+            "enemyId": "stalker",
+            "x": 460,
+            "y": 320
+          },
+          {
+            "enemyId": "husk",
+            "x": 200,
+            "y": 480
+          },
+          {
+            "enemyId": "husk",
+            "x": 720,
+            "y": 170
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_warhammer",
+            "x": 160,
+            "y": 320
+          },
+          {
+            "itemId": "heavy_blade",
+            "x": 860,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 480,
+          "y": 40,
+          "w": 160,
+          "h": 60
+        },
+        "walls": [
+          {
+            "x": 260,
+            "y": 240,
+            "w": 180,
+            "h": 40
+          },
+          {
+            "x": 260,
+            "y": 360,
+            "w": 180,
+            "h": 40
+          },
+          {
+            "x": 560,
+            "y": 120,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 560,
+            "y": 360,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 760,
+            "y": 240,
+            "w": 120,
+            "h": 160
+          }
+        ],
+        "offset": {
+          "x": 2360,
+          "y": 0
+        },
+        "exits": [
+          "r5"
+        ]
+      },
+      {
+        "id": "r5",
+        "type": "rest",
+        "name": "Break Between Bells",
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade",
+          "w_rapier"
+        ],
+        "entrance": {
+          "x": 120,
+          "y": 520
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 430,
+            "y": 160,
+            "w": 100,
+            "h": 40
+          },
+          {
+            "x": 430,
+            "y": 440,
+            "w": 100,
+            "h": 40
+          },
+          {
+            "x": 300,
+            "y": 280,
+            "w": 40,
+            "h": 80
+          },
+          {
+            "x": 620,
+            "y": 280,
+            "w": 40,
+            "h": 80
+          }
+        ],
+        "offset": {
+          "x": 2360,
+          "y": -860
+        }
+      },
+      {
+        "id": "r6",
+        "type": "arena",
+        "name": "Midterm Spiral",
+        "spawns": [
+          "brute",
+          "imp",
+          "archer",
+          "stalker",
+          "husk",
+          "husk"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "brute",
+            "x": 800,
+            "y": 500
+          },
+          {
+            "enemyId": "imp",
+            "x": 820,
+            "y": 170
+          },
+          {
+            "enemyId": "archer",
+            "x": 600,
+            "y": 320
+          },
+          {
+            "enemyId": "stalker",
+            "x": 320,
+            "y": 500
+          },
+          {
+            "enemyId": "husk",
+            "x": 180,
+            "y": 180
+          },
+          {
+            "enemyId": "husk",
+            "x": 460,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 220,
+            "y": 100,
+            "w": 520,
+            "h": 40
+          },
+          {
+            "x": 220,
+            "y": 100,
+            "w": 40,
+            "h": 340
+          },
+          {
+            "x": 220,
+            "y": 400,
+            "w": 360,
+            "h": 40
+          },
+          {
+            "x": 540,
+            "y": 220,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 360,
+            "y": 220,
+            "w": 220,
+            "h": 40
+          }
+        ],
+        "offset": {
+          "x": 3540,
+          "y": -860
+        },
+        "exits": [
+          "r7",
+          "r8"
+        ]
+      },
+      {
+        "id": "r7",
+        "type": "treasure",
+        "name": "Scholar's Loft",
+        "item": "w_katana",
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 320,
+            "y": 320
+          },
+          {
+            "itemId": "iron_ring",
+            "x": 640,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 480,
+          "y": 560
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 360,
+            "y": 160,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 560,
+            "y": 260,
+            "w": 40,
+            "h": 220
+          }
+        ],
+        "offset": {
+          "x": 3540,
+          "y": -1720
+        },
+        "exits": [
+          "r9"
+        ]
+      },
+      {
+        "id": "r8",
+        "type": "arena",
+        "name": "Cram Session Pit",
+        "spawns": [
+          "rime_brute",
+          "frost_sprite",
+          "frost_sprite",
+          "imp",
+          "stalker",
+          "husk"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "rime_brute",
+            "x": 520,
+            "y": 320
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 190,
+            "y": 170
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 810,
+            "y": 470
+          },
+          {
+            "enemyId": "imp",
+            "x": 820,
+            "y": 170
+          },
+          {
+            "enemyId": "stalker",
+            "x": 240,
+            "y": 470
+          },
+          {
+            "enemyId": "husk",
+            "x": 700,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "swift_boots",
+            "x": 160,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 480,
+          "y": 40,
+          "w": 160,
+          "h": 60
+        },
+        "walls": [
+          {
+            "x": 280,
+            "y": 120,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 280,
+            "y": 360,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 480,
+            "y": 220,
+            "w": 160,
+            "h": 40
+          },
+          {
+            "x": 720,
+            "y": 120,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 720,
+            "y": 360,
+            "w": 40,
+            "h": 160
+          }
+        ],
+        "offset": {
+          "x": 4720,
+          "y": -860
+        },
+        "exits": [
+          "r9"
+        ]
+      },
+      {
+        "id": "r9",
+        "type": "arena",
+        "name": "Honor Lock",
+        "spawns": [
+          "brute",
+          "rime_brute",
+          "imp",
+          "archer",
+          "stalker",
+          "husk",
+          "frost_sprite"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "brute",
+            "x": 220,
+            "y": 150
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 760,
+            "y": 470
+          },
+          {
+            "enemyId": "imp",
+            "x": 780,
+            "y": 160
+          },
+          {
+            "enemyId": "archer",
+            "x": 520,
+            "y": 120
+          },
+          {
+            "enemyId": "stalker",
+            "x": 250,
+            "y": 470
+          },
+          {
+            "enemyId": "husk",
+            "x": 540,
+            "y": 500
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 520,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 840,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 120,
+          "y": 520
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 220,
+            "y": 140,
+            "w": 40,
+            "h": 360
+          },
+          {
+            "x": 420,
+            "y": 0,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 420,
+            "y": 420,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 620,
+            "y": 140,
+            "w": 40,
+            "h": 360
+          },
+          {
+            "x": 760,
+            "y": 260,
+            "w": 120,
+            "h": 40
+          }
+        ],
+        "offset": {
+          "x": 4720,
+          "y": -1720
+        },
+        "exits": [
+          "r10"
+        ]
+      },
+      {
+        "id": "r10",
+        "type": "boss",
+        "name": "Final Exam Hall",
+        "boss": "ember_lich",
+        "bossSpawn": {
+          "x": 700,
+          "y": 320
+        },
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": null,
+        "walls": [
+          {
+            "x": 300,
+            "y": 180,
+            "w": 40,
+            "h": 100
+          },
+          {
+            "x": 300,
+            "y": 360,
+            "w": 40,
+            "h": 100
+          },
+          {
+            "x": 620,
+            "y": 180,
+            "w": 40,
+            "h": 100
+          },
+          {
+            "x": 620,
+            "y": 360,
+            "w": 40,
+            "h": 100
+          }
+        ],
+        "offset": {
+          "x": 5900,
+          "y": -1720
+        },
+        "exits": []
+      }
+    ]
+  },
+  "wyrmfire-citadel": {
+    "id": "wyrmfire-citadel",
+    "name": "Wyrmfire Citadel",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "Scorched Causeway",
+        "spawns": [
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "imp",
+          "imp",
+          "flamebound_knight"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "cinder_whelp",
+            "x": 450,
+            "y": 170
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 450,
+            "y": 470
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 620,
+            "y": 320
+          },
+          {
+            "enemyId": "imp",
+            "x": 760,
+            "y": 210
+          },
+          {
+            "enemyId": "imp",
+            "x": 760,
+            "y": 430
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 860,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_spear",
+            "x": 170,
+            "y": 320
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 500
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 330,
+            "y": 80,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 330,
+            "y": 390,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 650,
+            "y": 260,
+            "w": 40,
+            "h": 120
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "r2",
+        "type": "arena",
+        "name": "Whelp Hatchery",
+        "spawns": [
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "ash_cultist",
+          "ash_cultist"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "cinder_whelp",
+            "x": 430,
+            "y": 160
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 430,
+            "y": 480
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 620,
+            "y": 220
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 620,
+            "y": 420
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 780,
+            "y": 320
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 840,
+            "y": 150
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 840,
+            "y": 490
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_crossbow",
+            "x": 210,
+            "y": 120
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 300,
+            "y": 250,
+            "w": 220,
+            "h": 30
+          },
+          {
+            "x": 300,
+            "y": 360,
+            "w": 220,
+            "h": 30
+          },
+          {
+            "x": 680,
+            "y": 100,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 680,
+            "y": 400,
+            "w": 40,
+            "h": 140
+          }
+        ],
+        "offset": {
+          "x": 1180,
+          "y": 0
+        }
+      },
+      {
+        "id": "r3",
+        "type": "treasure",
+        "name": "Dragonslayer Cache",
+        "item": "heavy_blade",
+        "itemSpawns": [
+          {
+            "itemId": "w_greatsword",
+            "x": 300,
+            "y": 320
+          },
+          {
+            "itemId": "w_warhammer",
+            "x": 600,
+            "y": 320
+          },
+          {
+            "itemId": "w_katana",
+            "x": 720,
+            "y": 320
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 820,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 440,
+            "y": 170,
+            "w": 80,
+            "h": 30
+          },
+          {
+            "x": 440,
+            "y": 440,
+            "w": 80,
+            "h": 30
+          }
+        ],
+        "offset": {
+          "x": 2360,
+          "y": 0
+        }
+      },
+      {
+        "id": "r4",
+        "type": "arena",
+        "name": "Lava Sluice",
+        "spawns": [
+          "flamebound_knight",
+          "flamebound_knight",
+          "flamebound_knight",
+          "ash_cultist",
+          "ash_cultist",
+          "cinder_whelp",
+          "cinder_whelp",
+          "imp"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "flamebound_knight",
+            "x": 390,
+            "y": 320
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 640,
+            "y": 220
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 640,
+            "y": 420
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 170
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 470
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 500,
+            "y": 120
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 500,
+            "y": 520
+          },
+          {
+            "enemyId": "imp",
+            "x": 740,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "iron_ring",
+            "x": 250,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 280,
+            "y": 0,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 280,
+            "y": 420,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 540,
+            "y": 220,
+            "w": 40,
+            "h": 200
+          },
+          {
+            "x": 760,
+            "y": 100,
+            "w": 120,
+            "h": 30
+          },
+          {
+            "x": 760,
+            "y": 510,
+            "w": 120,
+            "h": 30
+          }
+        ],
+        "offset": {
+          "x": 2360,
+          "y": 860
+        }
+      },
+      {
+        "id": "r5",
+        "type": "rest",
+        "name": "Last Cold Shrine",
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade",
+          "w_crossbow"
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 280
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 360
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [],
+        "offset": {
+          "x": 3540,
+          "y": 860
+        }
+      },
+      {
+        "id": "r6",
+        "type": "boss",
+        "name": "Wyrmheart Caldera",
+        "boss": "ancient_red_dragon",
+        "bossSpawn": {
+          "x": 690,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "w_crossbow",
+            "x": 180,
+            "y": 140
+          },
+          {
+            "itemId": "w_warhammer",
+            "x": 180,
+            "y": 500
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": null,
+        "walls": [
+          {
+            "x": 390,
+            "y": 80,
+            "w": 120,
+            "h": 30
+          },
+          {
+            "x": 390,
+            "y": 530,
+            "w": 120,
+            "h": 30
+          },
+          {
+            "x": 560,
+            "y": 210,
+            "w": 40,
+            "h": 80
+          },
+          {
+            "x": 560,
+            "y": 350,
+            "w": 40,
+            "h": 80
+          }
+        ],
+        "offset": {
+          "x": 4720,
+          "y": 860
+        }
+      }
+    ]
+  },
+  "hard-dungeon-gauntlet": {
+    "id": "hard-dungeon-gauntlet",
+    "name": "Hard Dungeon: Enemy Gauntlet",
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "Overrun Gate",
+        "spawns": [
+          "stalker",
+          "stalker",
+          "husk",
+          "husk",
+          "grunt",
+          "grunt",
+          "slimeling",
+          "slimeling",
+          "archer",
+          "archer",
+          "brute",
+          "imp",
+          "imp",
+          "frost_sprite"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "stalker",
+            "x": 330,
+            "y": 180
+          },
+          {
+            "enemyId": "stalker",
+            "x": 330,
+            "y": 460
+          },
+          {
+            "enemyId": "husk",
+            "x": 430,
+            "y": 130
+          },
+          {
+            "enemyId": "husk",
+            "x": 430,
+            "y": 510
+          },
+          {
+            "enemyId": "grunt",
+            "x": 540,
+            "y": 220
+          },
+          {
+            "enemyId": "grunt",
+            "x": 540,
+            "y": 420
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 630,
+            "y": 160
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 630,
+            "y": 480
+          },
+          {
+            "enemyId": "archer",
+            "x": 760,
+            "y": 120
+          },
+          {
+            "enemyId": "archer",
+            "x": 760,
+            "y": 520
+          },
+          {
+            "enemyId": "brute",
+            "x": 760,
+            "y": 320
+          },
+          {
+            "enemyId": "imp",
+            "x": 850,
+            "y": 250
+          },
+          {
+            "enemyId": "imp",
+            "x": 850,
+            "y": 390
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 680,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_rapier",
+            "x": 160,
+            "y": 210
+          },
+          {
+            "itemId": "w_spear",
+            "x": 160,
+            "y": 320
+          },
+          {
+            "itemId": "w_crossbow",
+            "x": 160,
+            "y": 430
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 250,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 285,
+            "y": 90,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 285,
+            "y": 380,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 610,
+            "y": 250,
+            "w": 40,
+            "h": 140
+          }
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "arena",
+        "name": "Arrow Murder Hall",
+        "spawns": [
+          "archer",
+          "archer",
+          "archer",
+          "frost_sprite",
+          "frost_sprite",
+          "ash_cultist",
+          "ash_cultist",
+          "imp",
+          "imp",
+          "stalker",
+          "stalker",
+          "grunt",
+          "grunt",
+          "brute",
+          "rime_brute"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "archer",
+            "x": 430,
+            "y": 90
+          },
+          {
+            "enemyId": "archer",
+            "x": 650,
+            "y": 90
+          },
+          {
+            "enemyId": "archer",
+            "x": 830,
+            "y": 150
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 430,
+            "y": 550
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 650,
+            "y": 550
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 490
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 720,
+            "y": 320
+          },
+          {
+            "enemyId": "imp",
+            "x": 520,
+            "y": 210
+          },
+          {
+            "enemyId": "imp",
+            "x": 520,
+            "y": 430
+          },
+          {
+            "enemyId": "stalker",
+            "x": 340,
+            "y": 230
+          },
+          {
+            "enemyId": "stalker",
+            "x": 340,
+            "y": 410
+          },
+          {
+            "enemyId": "grunt",
+            "x": 590,
+            "y": 275
+          },
+          {
+            "enemyId": "grunt",
+            "x": 590,
+            "y": 365
+          },
+          {
+            "enemyId": "brute",
+            "x": 760,
+            "y": 240
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 760,
+            "y": 400
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 250,
+            "y": 120,
+            "w": 50,
+            "h": 400
+          },
+          {
+            "x": 470,
+            "y": 260,
+            "w": 150,
+            "h": 40
+          },
+          {
+            "x": 470,
+            "y": 340,
+            "w": 150,
+            "h": 40
+          },
+          {
+            "x": 780,
+            "y": 250,
+            "w": 40,
+            "h": 140
+          }
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "arena",
+        "name": "Rot Spiral Kennels",
+        "spawns": [
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "slimeling",
+          "slimeling",
+          "slimeling",
+          "slimeling",
+          "stalker",
+          "stalker",
+          "cinder_whelp",
+          "cinder_whelp",
+          "brute",
+          "brute",
+          "ash_cultist",
+          "frost_sprite"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "husk",
+            "x": 300,
+            "y": 120
+          },
+          {
+            "enemyId": "husk",
+            "x": 300,
+            "y": 220
+          },
+          {
+            "enemyId": "husk",
+            "x": 300,
+            "y": 420
+          },
+          {
+            "enemyId": "husk",
+            "x": 300,
+            "y": 520
+          },
+          {
+            "enemyId": "husk",
+            "x": 450,
+            "y": 170
+          },
+          {
+            "enemyId": "husk",
+            "x": 450,
+            "y": 470
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 560,
+            "y": 130
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 560,
+            "y": 510
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 680,
+            "y": 180
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 680,
+            "y": 460
+          },
+          {
+            "enemyId": "stalker",
+            "x": 400,
+            "y": 320
+          },
+          {
+            "enemyId": "stalker",
+            "x": 720,
+            "y": 320
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 810,
+            "y": 210
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 810,
+            "y": 430
+          },
+          {
+            "enemyId": "brute",
+            "x": 600,
+            "y": 250
+          },
+          {
+            "enemyId": "brute",
+            "x": 600,
+            "y": 390
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 840,
+            "y": 110
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 840,
+            "y": 530
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 210,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 220,
+            "y": 80,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 220,
+            "y": 380,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 470,
+            "y": 0,
+            "w": 40,
+            "h": 240
+          },
+          {
+            "x": 470,
+            "y": 400,
+            "w": 40,
+            "h": 240
+          },
+          {
+            "x": 720,
+            "y": 210,
+            "w": 40,
+            "h": 220
+          }
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "treasure",
+        "name": "First Leveler Cache",
+        "item": "heavy_blade",
+        "itemSpawns": [
+          {
+            "itemId": "iron_ring",
+            "x": 360,
+            "y": 260
+          },
+          {
+            "itemId": "swift_boots",
+            "x": 360,
+            "y": 380
+          },
+          {
+            "itemId": "w_axe",
+            "x": 580,
+            "y": 260
+          },
+          {
+            "itemId": "w_mace",
+            "x": 580,
+            "y": 380
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 730,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 430,
+            "y": 160,
+            "w": 100,
+            "h": 30
+          },
+          {
+            "x": 430,
+            "y": 450,
+            "w": 100,
+            "h": 30
+          }
+        ]
+      },
+      {
+        "id": "r5",
+        "type": "boss",
+        "name": "First Boss Gate",
+        "boss": "warden",
+        "bossSpawn": {
+          "x": 650,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 210,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 360,
+            "y": 100,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 360,
+            "y": 360,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 680,
+            "y": 120,
+            "w": 100,
+            "h": 30
+          },
+          {
+            "x": 680,
+            "y": 490,
+            "w": 100,
+            "h": 30
+          }
+        ]
+      },
+      {
+        "id": "r6",
+        "type": "rest",
+        "name": "Bruised Camp",
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade",
+          "w_greatsword",
+          "w_warhammer",
+          "w_katana",
+          "w_crossbow"
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 280,
+            "y": 260
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 280,
+            "y": 380
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": []
+      },
+      {
+        "id": "r7",
+        "type": "arena",
+        "name": "Frostfire Annex",
+        "spawns": [
+          "frost_sprite",
+          "frost_sprite",
+          "frost_sprite",
+          "rime_brute",
+          "rime_brute",
+          "imp",
+          "imp",
+          "imp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "ash_cultist",
+          "ash_cultist",
+          "flamebound_knight",
+          "grunt",
+          "grunt",
+          "stalker",
+          "stalker",
+          "brute"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "frost_sprite",
+            "x": 360,
+            "y": 110
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 520,
+            "y": 90
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 720,
+            "y": 120
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 460,
+            "y": 260
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 460,
+            "y": 420
+          },
+          {
+            "enemyId": "imp",
+            "x": 610,
+            "y": 220
+          },
+          {
+            "enemyId": "imp",
+            "x": 610,
+            "y": 420
+          },
+          {
+            "enemyId": "imp",
+            "x": 810,
+            "y": 320
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 320,
+            "y": 530
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 740,
+            "y": 520
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 840,
+            "y": 170
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 840,
+            "y": 470
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 690,
+            "y": 320
+          },
+          {
+            "enemyId": "grunt",
+            "x": 360,
+            "y": 300
+          },
+          {
+            "enemyId": "grunt",
+            "x": 360,
+            "y": 380
+          },
+          {
+            "enemyId": "stalker",
+            "x": 520,
+            "y": 540
+          },
+          {
+            "enemyId": "stalker",
+            "x": 520,
+            "y": 140
+          },
+          {
+            "enemyId": "brute",
+            "x": 750,
+            "y": 250
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 210,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 270,
+            "y": 0,
+            "w": 40,
+            "h": 230
+          },
+          {
+            "x": 270,
+            "y": 410,
+            "w": 40,
+            "h": 230
+          },
+          {
+            "x": 550,
+            "y": 260,
+            "w": 40,
+            "h": 120
+          },
+          {
+            "x": 790,
+            "y": 0,
+            "w": 40,
+            "h": 210
+          },
+          {
+            "x": 790,
+            "y": 430,
+            "w": 40,
+            "h": 210
+          }
+        ]
+      },
+      {
+        "id": "r8",
+        "type": "arena",
+        "name": "Elite Kill Box",
+        "spawns": [
+          "flamebound_knight",
+          "flamebound_knight",
+          "flamebound_knight",
+          "rime_brute",
+          "rime_brute",
+          "brute",
+          "brute",
+          "ash_cultist",
+          "ash_cultist",
+          "archer",
+          "archer",
+          "cinder_whelp",
+          "cinder_whelp",
+          "imp",
+          "frost_sprite",
+          "stalker"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "flamebound_knight",
+            "x": 430,
+            "y": 230
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 430,
+            "y": 410
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 720,
+            "y": 320
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 590,
+            "y": 190
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 590,
+            "y": 450
+          },
+          {
+            "enemyId": "brute",
+            "x": 310,
+            "y": 320
+          },
+          {
+            "enemyId": "brute",
+            "x": 810,
+            "y": 240
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 110
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 530
+          },
+          {
+            "enemyId": "archer",
+            "x": 510,
+            "y": 90
+          },
+          {
+            "enemyId": "archer",
+            "x": 510,
+            "y": 550
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 680,
+            "y": 150
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 680,
+            "y": 490
+          },
+          {
+            "enemyId": "imp",
+            "x": 780,
+            "y": 410
+          },
+          {
+            "enemyId": "frost_sprite",
+            "x": 350,
+            "y": 120
+          },
+          {
+            "enemyId": "stalker",
+            "x": 350,
+            "y": 520
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 250,
+            "y": 120,
+            "w": 40,
+            "h": 400
+          },
+          {
+            "x": 490,
+            "y": 120,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 490,
+            "y": 380,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 700,
+            "y": 260,
+            "w": 120,
+            "h": 40
+          },
+          {
+            "x": 700,
+            "y": 340,
+            "w": 120,
+            "h": 40
+          }
+        ]
+      },
+      {
+        "id": "r9",
+        "type": "boss",
+        "name": "Brood Pit",
+        "boss": "broodmother",
+        "bossSpawn": {
+          "x": 690,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 230,
+            "y": 250
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 230,
+            "y": 390
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 380,
+            "y": 90,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 380,
+            "y": 380,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 620,
+            "y": 250,
+            "w": 40,
+            "h": 140
+          }
+        ]
+      },
+      {
+        "id": "r10",
+        "type": "treasure",
+        "name": "Champion Hoard",
+        "item": "iron_ring",
+        "itemSpawns": [
+          {
+            "itemId": "w_katana",
+            "x": 330,
+            "y": 240
+          },
+          {
+            "itemId": "w_greatsword",
+            "x": 480,
+            "y": 240
+          },
+          {
+            "itemId": "w_warhammer",
+            "x": 630,
+            "y": 240
+          },
+          {
+            "itemId": "swift_boots",
+            "x": 480,
+            "y": 400
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 700,
+            "y": 400
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 410,
+            "y": 170,
+            "w": 140,
+            "h": 30
+          },
+          {
+            "x": 410,
+            "y": 440,
+            "w": 140,
+            "h": 30
+          }
+        ]
+      },
+      {
+        "id": "r11",
+        "type": "arena",
+        "name": "The Overfull Pit",
+        "spawns": [
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "husk",
+          "slimeling",
+          "slimeling",
+          "slimeling",
+          "slimeling",
+          "stalker",
+          "stalker",
+          "stalker",
+          "stalker",
+          "grunt",
+          "grunt",
+          "grunt",
+          "grunt",
+          "archer",
+          "archer",
+          "imp",
+          "imp",
+          "brute",
+          "rime_brute"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "husk",
+            "x": 270,
+            "y": 100
+          },
+          {
+            "enemyId": "husk",
+            "x": 270,
+            "y": 190
+          },
+          {
+            "enemyId": "husk",
+            "x": 270,
+            "y": 450
+          },
+          {
+            "enemyId": "husk",
+            "x": 270,
+            "y": 540
+          },
+          {
+            "enemyId": "husk",
+            "x": 410,
+            "y": 130
+          },
+          {
+            "enemyId": "husk",
+            "x": 410,
+            "y": 510
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 520,
+            "y": 110
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 520,
+            "y": 530
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 650,
+            "y": 140
+          },
+          {
+            "enemyId": "slimeling",
+            "x": 650,
+            "y": 500
+          },
+          {
+            "enemyId": "stalker",
+            "x": 360,
+            "y": 260
+          },
+          {
+            "enemyId": "stalker",
+            "x": 360,
+            "y": 380
+          },
+          {
+            "enemyId": "stalker",
+            "x": 740,
+            "y": 260
+          },
+          {
+            "enemyId": "stalker",
+            "x": 740,
+            "y": 380
+          },
+          {
+            "enemyId": "grunt",
+            "x": 500,
+            "y": 250
+          },
+          {
+            "enemyId": "grunt",
+            "x": 500,
+            "y": 390
+          },
+          {
+            "enemyId": "grunt",
+            "x": 610,
+            "y": 250
+          },
+          {
+            "enemyId": "grunt",
+            "x": 610,
+            "y": 390
+          },
+          {
+            "enemyId": "archer",
+            "x": 830,
+            "y": 120
+          },
+          {
+            "enemyId": "archer",
+            "x": 830,
+            "y": 520
+          },
+          {
+            "enemyId": "imp",
+            "x": 810,
+            "y": 270
+          },
+          {
+            "enemyId": "imp",
+            "x": 810,
+            "y": 370
+          },
+          {
+            "enemyId": "brute",
+            "x": 670,
+            "y": 320
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 430,
+            "y": 320
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 200,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 225,
+            "y": 0,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 225,
+            "y": 420,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 460,
+            "y": 210,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 700,
+            "y": 0,
+            "w": 40,
+            "h": 220
+          },
+          {
+            "x": 700,
+            "y": 420,
+            "w": 40,
+            "h": 220
+          }
+        ]
+      },
+      {
+        "id": "r12",
+        "type": "boss",
+        "name": "Gravelord Toll",
+        "boss": "gravelord",
+        "bossSpawn": {
+          "x": 690,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 220,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 340,
+            "y": 90,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 340,
+            "y": 370,
+            "w": 40,
+            "h": 180
+          },
+          {
+            "x": 590,
+            "y": 250,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 760,
+            "y": 110,
+            "w": 90,
+            "h": 30
+          },
+          {
+            "x": 760,
+            "y": 500,
+            "w": 90,
+            "h": 30
+          }
+        ]
+      },
+      {
+        "id": "r13",
+        "type": "rest",
+        "name": "Last Breath Shrine",
+        "shop": [
+          "potion_heal",
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade",
+          "w_katana",
+          "w_crossbow",
+          "w_warhammer"
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 240
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 320
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 400
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": []
+      },
+      {
+        "id": "r14",
+        "type": "arena",
+        "name": "Cinder Cathedral",
+        "spawns": [
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "cinder_whelp",
+          "imp",
+          "imp",
+          "imp",
+          "ash_cultist",
+          "ash_cultist",
+          "ash_cultist",
+          "flamebound_knight",
+          "flamebound_knight",
+          "flamebound_knight",
+          "archer",
+          "archer",
+          "stalker",
+          "stalker",
+          "brute",
+          "brute",
+          "rime_brute"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "cinder_whelp",
+            "x": 330,
+            "y": 130
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 330,
+            "y": 510
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 520,
+            "y": 110
+          },
+          {
+            "enemyId": "cinder_whelp",
+            "x": 520,
+            "y": 530
+          },
+          {
+            "enemyId": "imp",
+            "x": 430,
+            "y": 250
+          },
+          {
+            "enemyId": "imp",
+            "x": 430,
+            "y": 390
+          },
+          {
+            "enemyId": "imp",
+            "x": 760,
+            "y": 320
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 130
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 830,
+            "y": 510
+          },
+          {
+            "enemyId": "ash_cultist",
+            "x": 690,
+            "y": 210
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 590,
+            "y": 270
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 590,
+            "y": 370
+          },
+          {
+            "enemyId": "flamebound_knight",
+            "x": 750,
+            "y": 440
+          },
+          {
+            "enemyId": "archer",
+            "x": 350,
+            "y": 90
+          },
+          {
+            "enemyId": "archer",
+            "x": 350,
+            "y": 550
+          },
+          {
+            "enemyId": "stalker",
+            "x": 690,
+            "y": 110
+          },
+          {
+            "enemyId": "stalker",
+            "x": 690,
+            "y": 530
+          },
+          {
+            "enemyId": "brute",
+            "x": 460,
+            "y": 320
+          },
+          {
+            "enemyId": "brute",
+            "x": 810,
+            "y": 260
+          },
+          {
+            "enemyId": "rime_brute",
+            "x": 810,
+            "y": 380
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 200,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 260,
+            "y": 100,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 260,
+            "y": 370,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 540,
+            "y": 0,
+            "w": 40,
+            "h": 210
+          },
+          {
+            "x": 540,
+            "y": 430,
+            "w": 40,
+            "h": 210
+          },
+          {
+            "x": 760,
+            "y": 250,
+            "w": 40,
+            "h": 140
+          }
+        ]
+      },
+      {
+        "id": "r15",
+        "type": "boss",
+        "name": "Ember Lich Trial",
+        "boss": "ember_lich",
+        "bossSpawn": {
+          "x": 690,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 220,
+            "y": 260
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 220,
+            "y": 380
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 360,
+            "y": 90,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 360,
+            "y": 390,
+            "w": 40,
+            "h": 160
+          },
+          {
+            "x": 610,
+            "y": 220,
+            "w": 40,
+            "h": 200
+          },
+          {
+            "x": 800,
+            "y": 120,
+            "w": 90,
+            "h": 30
+          },
+          {
+            "x": 800,
+            "y": 490,
+            "w": 90,
+            "h": 30
+          }
+        ]
+      },
+      {
+        "id": "r16",
+        "type": "rest",
+        "name": "Final Supply Line",
+        "shop": [
+          "potion_heal",
+          "potion_heal",
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade",
+          "w_crossbow",
+          "w_warhammer"
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 240
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 320
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 260,
+            "y": 400
+          },
+          {
+            "itemId": "w_crossbow",
+            "x": 480,
+            "y": 260
+          },
+          {
+            "itemId": "w_warhammer",
+            "x": 480,
+            "y": 380
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": []
+      },
+      {
+        "id": "r17",
+        "type": "boss",
+        "name": "Wyrmheart Last Stand",
+        "boss": "ancient_red_dragon",
+        "bossSpawn": {
+          "x": 690,
+          "y": 320
+        },
+        "itemSpawns": [
+          {
+            "itemId": "potion_heal",
+            "x": 220,
+            "y": 250
+          },
+          {
+            "itemId": "potion_heal",
+            "x": 220,
+            "y": 390
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": null,
+        "walls": [
+          {
+            "x": 330,
+            "y": 80,
+            "w": 130,
+            "h": 30
+          },
+          {
+            "x": 330,
+            "y": 530,
+            "w": 130,
+            "h": 30
+          },
+          {
+            "x": 560,
+            "y": 210,
+            "w": 40,
+            "h": 80
+          },
+          {
+            "x": 560,
+            "y": 350,
+            "w": 40,
+            "h": 80
+          },
+          {
+            "x": 780,
+            "y": 150,
+            "w": 40,
+            "h": 120
+          },
+          {
+            "x": 780,
+            "y": 370,
+            "w": 40,
+            "h": 120
+          }
+        ]
+      }
+    ]
+  },
+  "endless-descent": {
+    "id": "endless-descent",
+    "name": "The Endless Descent",
+    "endless": true,
+    "rooms": [
+      {
+        "id": "r1",
+        "type": "arena",
+        "name": "Descent Landing",
+        "spawns": [
+          "grunt",
+          "husk",
+          "stalker",
+          "archer"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "grunt",
+            "x": 520,
+            "y": 250
+          },
+          {
+            "enemyId": "husk",
+            "x": 700,
+            "y": 420
+          },
+          {
+            "enemyId": "stalker",
+            "x": 380,
+            "y": 320
+          },
+          {
+            "enemyId": "archer",
+            "x": 830,
+            "y": 180
+          }
+        ],
+        "itemSpawns": [
+          {
+            "itemId": "w_sword",
+            "x": 180,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 340,
+            "y": 110,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 340,
+            "y": 360,
+            "w": 40,
+            "h": 170
+          },
+          {
+            "x": 620,
+            "y": 210,
+            "w": 40,
+            "h": 220
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "r2",
+        "type": "rest",
+        "name": "Waystation",
+        "shop": [
+          "potion_heal",
+          "iron_ring",
+          "swift_boots",
+          "heavy_blade"
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [],
+        "offset": {
+          "x": 1180,
+          "y": 0
+        }
+      },
+      {
+        "id": "r3",
+        "type": "arena",
+        "name": "Sunless Pit",
+        "spawns": [
+          "brute",
+          "imp",
+          "imp",
+          "archer",
+          "husk"
+        ],
+        "enemySpawns": [
+          {
+            "enemyId": "brute",
+            "x": 560,
+            "y": 320
+          },
+          {
+            "enemyId": "imp",
+            "x": 720,
+            "y": 200
+          },
+          {
+            "enemyId": "imp",
+            "x": 720,
+            "y": 440
+          },
+          {
+            "enemyId": "archer",
+            "x": 850,
+            "y": 320
+          },
+          {
+            "enemyId": "husk",
+            "x": 300,
+            "y": 320
+          }
+        ],
+        "entrance": {
+          "x": 80,
+          "y": 320
+        },
+        "exit": {
+          "x": 900,
+          "y": 240,
+          "w": 60,
+          "h": 160
+        },
+        "walls": [
+          {
+            "x": 340,
+            "y": 140,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 340,
+            "y": 360,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 660,
+            "y": 140,
+            "w": 40,
+            "h": 140
+          },
+          {
+            "x": 660,
+            "y": 360,
+            "w": 40,
+            "h": 140
+          }
+        ],
+        "offset": {
+          "x": 2360,
+          "y": 0
+        }
       }
     ]
   }

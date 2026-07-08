@@ -70,12 +70,18 @@ export class Network {
     this.room?.send("move", { x, y, facingX, facingY, rolling });
   }
 
-  sendEnemyHit(enemyId: string, damage: number) {
-    this.room?.send("enemy_hit", { enemyId, damage });
+  /**
+   * Report a landed hit. The client owns hit geometry (which enemy the swing/
+   * bolt caught); the server computes the damage from our synced weapon/stats.
+   * `crit` mirrors the local display roll so the number shown matches the
+   * damage applied; abilities pass their id so the server applies damageMult.
+   */
+  sendEnemyHit(enemyId: string, opts: { kind: "weapon" | "ability"; abilityId?: string; crit?: boolean }) {
+    this.room?.send("enemy_hit", { enemyId, ...opts });
   }
 
-  sendPlayerHit(targetId: string, damage: number) {
-    this.room?.send("player_hit", { targetId, damage });
+  sendPlayerHit(targetId: string, crit = false) {
+    this.room?.send("player_hit", { targetId, crit });
   }
 
   sendUsePotion() {
@@ -90,7 +96,19 @@ export class Network {
     this.room?.send("reroll_shop");
   }
 
+  sendChoosePowerUp(id: string) {
+    this.room?.send("choose_powerup", { id });
+  }
+
   sendEmote(emote: number) {
     this.room?.send("emote", { emote });
+  }
+
+  sendAbility(abilityId: string) {
+    this.room?.send("ability", { abilityId });
+  }
+
+  sendPickupWeapon(id: string) {
+    this.room?.send("pickup_weapon", { id });
   }
 }

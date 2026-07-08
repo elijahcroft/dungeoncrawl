@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { VisualRecipe } from "../../../shared/boss";
+import type { PlayerAccessory } from "../../../shared/classes";
 
 /**
  * Procedurally-drawn placeholder sprites (no external art assets in this repo).
@@ -24,21 +25,10 @@ function lighten(color: number, amount: number): number {
   return (r << 16) | (g << 8) | b;
 }
 
-/** Held-weapon art variants the player sprite can render (see entities/weapons.ts). */
-export type WeaponSprite =
-  | "sword"
-  | "dagger"
-  | "axe"
-  | "spear"
-  | "mace"
-  | "rapier"
-  | "greatsword"
-  | "warhammer"
-  | "katana"
-  | "crossbow"
-  // "none" bakes no weapon into the player texture — used for ranged weapons that
-  // render as a separate aim-tracking overlay instead (see ensureAimedWeaponTexture).
-  | "none";
+// The WeaponSprite union lives with the shared weapon table now; re-exported so
+// existing `from "../gfx/sprites"` type imports keep working.
+import type { WeaponSprite } from "../../../shared/weapons";
+export type { WeaponSprite };
 
 /** Player sprite canvas. Bigger than the enemy grunts so the hero reads as the focal point. */
 export const PLAYER_W = 52;
@@ -196,6 +186,49 @@ const POSES: Record<PlayerPoseName, Pose> = {
 export const WALK_POSES: PlayerPoseName[] = ["walk0", "walk1", "walk2", "walk3"];
 export const IDLE_POSES: PlayerPoseName[] = ["idle0", "idle1"];
 
+/** Draws a class's head silhouette on top of the helmet — the main at-a-glance class read. */
+function drawClassAccessory(
+  g: Phaser.GameObjects.Graphics,
+  accessory: PlayerAccessory,
+  hx: number,
+  headY: number,
+  headR: number,
+  bodyColor: number,
+  trimColor: number,
+  outlineColor: number,
+) {
+  switch (accessory) {
+    case "none":
+      break;
+    case "hood":
+      g.fillStyle(darken(bodyColor, 30), 1);
+      g.fillRoundedRect(hx - headR - 2, headY - headR - 4, headR * 2 + 4, headR + 8, 6);
+      g.lineStyle(1.2, outlineColor, 1);
+      g.strokeRoundedRect(hx - headR - 2, headY - headR - 4, headR * 2 + 4, headR + 8, 6);
+      break;
+    case "mask":
+      g.fillStyle(darken(bodyColor, 45), 1);
+      g.fillRect(hx - headR + 1, headY - 1, headR * 2 - 2, 5);
+      break;
+    case "spikes":
+      g.fillStyle(trimColor, 1);
+      for (let i = -1; i <= 1; i++) {
+        g.fillTriangle(hx + i * 5 - 2, headY - headR + 1, hx + i * 5 + 2, headY - headR + 1, hx + i * 5, headY - headR - 7);
+      }
+      break;
+    case "hat":
+      g.fillStyle(bodyColor, 1);
+      g.fillTriangle(hx - headR - 1, headY - headR - 1, hx + headR + 1, headY - headR - 1, hx, headY - headR - 20);
+      g.fillStyle(trimColor, 1);
+      g.fillRect(hx - headR - 2, headY - headR - 2, headR * 2 + 4, 3);
+      break;
+    case "halo":
+      g.lineStyle(2, trimColor, 0.9);
+      g.strokeEllipse(hx, headY - headR - 7, headR * 1.6, 4);
+      break;
+  }
+}
+
 function drawPlayer(
   g: Phaser.GameObjects.Graphics,
   color: number,
@@ -204,6 +237,9 @@ function drawPlayer(
   weaponColor: number,
   trimColor: number,
   cape: boolean,
+  accessory: PlayerAccessory,
+  legStyle: "boots" | "robe",
+  bulk: number,
 ) {
   const bodyColor = color;
   const legColor = darken(color, 60);
@@ -218,7 +254,7 @@ function drawPlayer(
   const headY = 22 + by;
   const headR = 8;
   const torsoTop = 29 + by;
-  const torsoW = 22;
+  const torsoW = 22 * bulk;
   const torsoH = 21;
   const torsoBottom = torsoTop + torsoH;
   const legLen = 11 - pose.crouch;
@@ -229,20 +265,39 @@ function drawPlayer(
     g.fillTriangle(cx - 7 - lean * 0.4, torsoTop + 1, cx + 7 - lean * 0.4, torsoTop + 1, cx - lean * 1.4, torsoBottom + 9 + pose.crouch);
   }
 
-  // legs + boots (outlined to match the torso/head silhouette)
-  const legTopL = torsoBottom - 2 + pose.legL;
-  const legTopR = torsoBottom - 2 + pose.legR;
-  g.lineStyle(1, outlineColor, 1);
-  g.fillStyle(legColor, 1);
-  g.fillRect(cx - 8, legTopL, 6, legLen);
-  g.strokeRect(cx - 8, legTopL, 6, legLen);
-  g.fillRect(cx + 2, legTopR, 6, legLen);
-  g.strokeRect(cx + 2, legTopR, 6, legLen);
-  g.fillStyle(darken(legColor, 35), 1);
-  g.fillRect(cx - 9, legTopL + legLen - 3, 8, 3);
-  g.strokeRect(cx - 9, legTopL + legLen - 3, 8, 3);
-  g.fillRect(cx + 2, legTopR + legLen - 3, 8, 3);
-  g.strokeRect(cx + 2, legTopR + legLen - 3, 8, 3);
+  if (legStyle === "robe") {
+    // A single tapered skirt instead of two legs/boots — casters and support read as robed.
+    const hemSway = (pose.legL - pose.legR) * 0.2;
+    const skirtTop = torsoBottom - 2;
+    const skirtBottom = skirtTop + legLen + 5;
+    g.lineStyle(1, outlineColor, 1);
+    g.fillStyle(bodyColor, 1);
+    g.beginPath();
+    g.moveTo(cx - torsoW / 2 + 2 + lean * 0.4, skirtTop);
+    g.lineTo(cx + torsoW / 2 - 2 + lean * 0.4, skirtTop);
+    g.lineTo(cx + torsoW / 2 + 3 + hemSway + lean * 0.4, skirtBottom);
+    g.lineTo(cx - torsoW / 2 - 3 + hemSway + lean * 0.4, skirtBottom);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+    g.fillStyle(trimColor, 1);
+    g.fillRect(cx - torsoW / 2 - 3 + hemSway + lean * 0.4, skirtBottom - 3, torsoW + 6, 3); // hem trim
+  } else {
+    // legs + boots (outlined to match the torso/head silhouette)
+    const legTopL = torsoBottom - 2 + pose.legL;
+    const legTopR = torsoBottom - 2 + pose.legR;
+    g.lineStyle(1, outlineColor, 1);
+    g.fillStyle(legColor, 1);
+    g.fillRect(cx - 8, legTopL, 6, legLen);
+    g.strokeRect(cx - 8, legTopL, 6, legLen);
+    g.fillRect(cx + 2, legTopR, 6, legLen);
+    g.strokeRect(cx + 2, legTopR, 6, legLen);
+    g.fillStyle(darken(legColor, 35), 1);
+    g.fillRect(cx - 9, legTopL + legLen - 3, 8, 3);
+    g.strokeRect(cx - 9, legTopL + legLen - 3, 8, 3);
+    g.fillRect(cx + 2, legTopR + legLen - 3, 8, 3);
+    g.strokeRect(cx + 2, legTopR + legLen - 3, 8, 3);
+  }
 
   // back arm (behind torso)
   g.fillStyle(darken(bodyColor, 45), 1);
@@ -308,6 +363,8 @@ function drawPlayer(
   // eye glint (facing indicator, drawn toward +x; flipped via sprite.flipX)
   g.fillStyle(0xffe9b0, 1);
   g.fillCircle(hx + headR * 0.45, headY + 0.4, 1.5);
+
+  drawClassAccessory(g, accessory, hx, headY, headR, bodyColor, trimColor, outlineColor);
 }
 
 /**
@@ -361,12 +418,15 @@ export function ensurePlayerTexture(
   weaponColor = 0xcfd6e0,
   trimColor = 0xe2e8f2,
   cape = true,
+  accessory: PlayerAccessory = "none",
+  legStyle: "boots" | "robe" = "boots",
+  bulk = 1,
 ): string {
-  const key = `char_p_${colorHex.toString(16)}_${poseName}_${weaponSprite}_${weaponColor.toString(16)}_${trimColor.toString(16)}_${cape ? 1 : 0}`;
+  const key = `char_p_${colorHex.toString(16)}_${poseName}_${weaponSprite}_${weaponColor.toString(16)}_${trimColor.toString(16)}_${cape ? 1 : 0}_${accessory}_${legStyle}_${bulk}`;
   if (generatedKeys.has(key) || scene.textures.exists(key)) return key;
   generatedKeys.add(key);
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  drawPlayer(g, colorHex, POSES[poseName], weaponSprite, weaponColor, trimColor, cape);
+  drawPlayer(g, colorHex, POSES[poseName], weaponSprite, weaponColor, trimColor, cape, accessory, legStyle, bulk);
   g.generateTexture(key, PLAYER_W, PLAYER_H);
   g.destroy();
   return key;

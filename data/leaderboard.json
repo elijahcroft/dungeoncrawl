@@ -1,0 +1,116 @@
+{
+  "new-dungeon-f7n7": [
+    {
+      "clearMs": 15879,
+      "party": [
+        "Player"
+      ],
+      "playerCount": 1,
+      "at": 1783447972243
+    },
+    {
+      "clearMs": 37296,
+      "party": [
+        "Player"
+      ],
+      "playerCount": 1,
+      "at": 1783454012234
+    }
+  ],
+  "midnight-cram-catacombs": [
+    {
+      "clearMs": 159906,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783450304245
+    }
+  ],
+  "blackforge-descent": [
+    {
+      "clearMs": 77126,
+      "party": [
+        "Holden",
+        "AUSTIN"
+      ],
+      "playerCount": 2,
+      "at": 1783461593688
+    },
+    {
+      "clearMs": 151462,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783450463330
+    }
+  ],
+  "widowsmoke-foundry": [
+    {
+      "clearMs": 111666,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783450590155
+    }
+  ],
+  "moonlit-bastion": [
+    {
+      "clearMs": 93865,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783450714147
+    }
+  ],
+  "frostspire-keep": [
+    {
+      "clearMs": 26637,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783450818286
+    }
+  ],
+  "wyrmfire-citadel": [
+    {
+      "clearMs": 130134,
+      "party": [
+        "AUSTIN",
+        "Holden"
+      ],
+      "playerCount": 2,
+      "at": 1783459266441
+    }
+  ],
+  "hard-dungeon-gauntlet": [
+    {
+      "clearMs": 307610,
+      "party": [
+        "Holden",
+        "AUSTIN"
+      ],
+      "playerCount": 2,
+      "at": 1783461469673
+    }
+  ],
+  "weapon-test": [
+    {
+      "clearMs": 16290,
+      "party": [
+        "Player"
+      ],
+      "playerCount": 1,
+      "at": 1783468544310
+    }
+  ]
+}

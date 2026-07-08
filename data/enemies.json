@@ -137,6 +137,126 @@
     },
     "phases": [{ "hpThreshold": 100, "attacks": ["scorch"] }]
   },
+  "cinder_whelp": {
+    "id": "cinder_whelp",
+    "name": "Cinder Whelp",
+    "hpMax": 40,
+    "goldReward": 17,
+    "aggroRange": 380,
+    "moveSpeed": 138,
+    "color": "0xe35a21",
+    "visual": {
+      "bodyShape": "hunched",
+      "size": 0.82,
+      "palette": { "body": "0xe35a21", "trim": "0x6f1d10", "eyes": "0xfff07a" },
+      "weapon": "claw",
+      "accessory": "horns",
+      "markings": "spots"
+    },
+    "attacks": {
+      "snap": {
+        "telegraphMs": 210,
+        "activeMs": 110,
+        "recoverMs": 260,
+        "cooldownMs": 560,
+        "damage": 9,
+        "range": 42,
+        "dashSpeed": 330,
+        "animationKey": "dash"
+      },
+      "ember_spit": {
+        "telegraphMs": 480,
+        "activeMs": 120,
+        "recoverMs": 340,
+        "cooldownMs": 980,
+        "damage": 10,
+        "range": 340,
+        "animationKey": "cast",
+        "projectile": { "speed": 370, "radius": 8, "count": 3, "spreadDeg": 34, "color": "0xff8a33" }
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["snap", "snap", "ember_spit"] }]
+  },
+  "ash_cultist": {
+    "id": "ash_cultist",
+    "name": "Ash Cultist",
+    "hpMax": 46,
+    "goldReward": 19,
+    "aggroRange": 420,
+    "color": "0xb04a2c",
+    "visual": {
+      "bodyShape": "slim",
+      "palette": { "body": "0xb04a2c", "trim": "0x3a1410", "eyes": "0xffd36a" },
+      "weapon": "spear",
+      "accessory": "hood",
+      "markings": "scars"
+    },
+    "attacks": {
+      "hex_flame": {
+        "telegraphMs": 600,
+        "activeMs": 160,
+        "recoverMs": 380,
+        "cooldownMs": 1150,
+        "damage": 15,
+        "range": 88,
+        "castRange": 390,
+        "groundTarget": true,
+        "animationKey": "eruption"
+      },
+      "cinder_bolt": {
+        "telegraphMs": 470,
+        "activeMs": 120,
+        "recoverMs": 320,
+        "cooldownMs": 920,
+        "damage": 10,
+        "range": 390,
+        "animationKey": "cast",
+        "projectile": { "speed": 410, "radius": 8, "color": "0xffb04a" }
+      }
+    },
+    "phases": [{ "hpThreshold": 100, "attacks": ["hex_flame", "cinder_bolt"] }]
+  },
+  "flamebound_knight": {
+    "id": "flamebound_knight",
+    "name": "Flamebound Knight",
+    "hpMax": 115,
+    "goldReward": 46,
+    "aggroRange": 230,
+    "moveSpeed": 72,
+    "color": "0x9f301c",
+    "visual": {
+      "bodyShape": "hulking",
+      "palette": { "body": "0x9f301c", "trim": "0x2b1110", "eyes": "0xffcc55" },
+      "weapon": "axe",
+      "accessory": "spikes",
+      "markings": "scars"
+    },
+    "attacks": {
+      "sunder": {
+        "telegraphMs": 470,
+        "activeMs": 180,
+        "recoverMs": 430,
+        "cooldownMs": 900,
+        "damage": 18,
+        "range": 72,
+        "animationKey": "swing"
+      },
+      "blazing_charge": {
+        "telegraphMs": 350,
+        "activeMs": 340,
+        "recoverMs": 480,
+        "cooldownMs": 1050,
+        "damage": 21,
+        "range": 70,
+        "dashSpeed": 690,
+        "animationKey": "dash"
+      }
+    },
+    "phases": [
+      { "hpThreshold": 100, "attacks": ["sunder", "blazing_charge"], "color": "0x9f301c" },
+      { "hpThreshold": 45, "attacks": ["sunder", "blazing_charge", "blazing_charge"], "color": "0xe04820" }
+    ]
+  },
   "husk": {
     "id": "husk",
     "name": "Grave Skitterer",
